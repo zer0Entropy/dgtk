@@ -1,12 +1,17 @@
 #include <filesystem>
 #include <SFML/Graphics.hpp>
+#include "../include/display.hpp"
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
 int main()
 {
-    auto window = sf::RenderWindow{ { 1920u, 1080u }, "CMake SFML Project" };
-    window.setFramerateLimit(144);
+    DisplayManager displayMgr;
+    WindowProperties windowProperties;
+    windowProperties.width = 1920;
+    windowProperties.height = 1080;
+    windowProperties.title = "Test Project";
+    displayMgr.InitWindow(windowProperties);
 
     std::filesystem::path binDir(std::filesystem::current_path());
     std::filesystem::path runDir(binDir.parent_path());
@@ -21,22 +26,20 @@ int main()
     Decoration background(backgroundID, DecorationType::Background);
     background.texture = resourceMgr.GetTexture(backgroundID);
 
-    sf::Sprite backgroundSprite;
-    backgroundSprite.setTexture(*background.texture);
-    backgroundSprite.setPosition(0.0f, 0.0f);
+    sf::Sprite* backgroundSprite = displayMgr.CreateSprite(background.texture);
+    backgroundSprite->setPosition(0.0f, 0.0f);
 
-    while (window.isOpen())
+    sf::RenderWindow* window(displayMgr.GetWindow());
+    while (window->isOpen())
     {
-        for (auto event = sf::Event{}; window.pollEvent(event);)
+        for (auto event = sf::Event{}; window->pollEvent(event);)
         {
             if (event.type == sf::Event::Closed)
             {
-                window.close();
+                displayMgr.CloseWindow();
             }
         }
 
-        window.clear();
-        window.draw(backgroundSprite);
-        window.display();
+        displayMgr.Update();
     }
 }
