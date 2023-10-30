@@ -10,8 +10,8 @@ FetchContent_Declare(SFML
     GIT_TAG 2.6.x)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(dgtkProject src/main.cpp)
-target_link_libraries(dgtkProject PRIVATE sfml-graphics)
+add_executable(dgtkProject src/main.cpp include/decoration.hpp include/ui.hpp include/resource.hpp include/id.hpp src/resource.cpp)
+target_link_libraries(dgtkProject PRIVATE sfml-audio sfml-graphics)
 target_compile_features(dgtkProject PRIVATE cxx_std_17)
 
 if(WIN32)
