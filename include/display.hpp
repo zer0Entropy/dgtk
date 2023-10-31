@@ -25,9 +25,12 @@ public:
     void                        Update();
 
     sf::Sprite*                 CreateSprite(sf::Texture* texture);
+    std::pair<float,float>      GetUIScale() const;
 private:
     std::unique_ptr<sf::RenderWindow>           window;
     std::vector<sf::Sprite*>                    spriteList;
+
+    float       uiScaleX, uiScaleY;
 };
 
 #endif //DGTKPROJECT_DISPLAY_HPP

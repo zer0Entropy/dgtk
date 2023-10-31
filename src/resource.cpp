@@ -52,7 +52,7 @@ bool ResourceManager::LoadTexture(UniqueID id, std::string_view path, Position s
 bool ResourceManager::LoadFrameTextures(UniqueID id, std::string_view path, Position topLeftPos, int segmentWidth, int segmentHeight) {
     bool success(false);
     Position currentPos(topLeftPos);
-    for(int segmentIndex = (int)FrameSegment::TopLeft; segmentIndex < (int)FrameSegment::TotalNumFrameSegments; segmentIndex++) {
+    for(int segmentIndex = (int)FrameSegment::TopLeft; segmentIndex < (int)FrameSegment::TotalNumFrameSegments; ++segmentIndex) {
         auto texture = std::make_unique<sf::Texture>();
         success = texture->loadFromFile(std::string(path), sf::IntRect(currentPos.x,
                                                                        currentPos.y,
@@ -62,6 +62,16 @@ bool ResourceManager::LoadFrameTextures(UniqueID id, std::string_view path, Posi
             UniqueID segmentID(id);
             segmentID.append(FrameSegmentNames.at(segmentIndex));
             textureMap.insert(std::make_pair(segmentID, std::move(texture)));
+        }
+        if(currentPos.x < (topLeftPos.x + (2 * segmentWidth))) {
+            currentPos.x += segmentWidth;
+        }
+        else if(currentPos.y < (topLeftPos.y + (2 * segmentHeight))) {
+            currentPos.x = topLeftPos.x;
+            currentPos.y += segmentHeight;
+        }
+        else {
+            break;
         }
     }
     return success;

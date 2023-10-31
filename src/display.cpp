@@ -12,7 +12,9 @@ void DisplayManager::InitWindow(WindowProperties properties) {
         }
         window.release();
     }
-    window = std::make_unique<sf::RenderWindow>(sf::VideoMode(properties.width, properties.height), properties.title);
+    window = std::make_unique<sf::RenderWindow>(sf::VideoMode(properties.width, properties.height), properties.title );
+    uiScaleX = 2.0f;
+    uiScaleY = 2.0f;
 }
 
 void DisplayManager::CloseWindow() {
@@ -40,7 +42,12 @@ sf::Sprite* DisplayManager::CreateSprite(sf::Texture* texture) {
     if(texture) {
         sprite = new sf::Sprite();
         sprite->setTexture(*texture);
+        sprite->setScale(uiScaleX, uiScaleY);
         spriteList.push_back(sprite);
     }
     return sprite;
+}
+
+std::pair<float, float> DisplayManager::GetUIScale() const {
+    return std::make_pair<float,float>((const float)uiScaleX, (const float)uiScaleY);
 }
