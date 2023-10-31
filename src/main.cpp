@@ -7,7 +7,8 @@
 void InitDisplayManager(DisplayManager& displayMgr, const WindowProperties& properties);
 bool InitResourceManager(ResourceManager& resourceMgr, std::filesystem::path workingDirectory);
 
-bool InitWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr);
+bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr);
+bool CreateGameTitle(DisplayManager& displayMgr, ResourceManager& resourceMgr);
 
 int main()
 {
@@ -25,7 +26,8 @@ int main()
         return -1;
     }
 
-    InitWindowFrame(displayMgr, resourceMgr);
+    CreateWindowFrame(displayMgr, resourceMgr);
+    CreateGameTitle(displayMgr, resourceMgr);
 
     sf::RenderWindow* window(displayMgr.GetWindow());
     while (window->isOpen())
@@ -51,7 +53,7 @@ bool InitResourceManager(ResourceManager& resourceMgr, std::filesystem::path wor
     return success;
 }
 
-bool InitWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr) {
+bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr) {
     bool success(false);
 
     //sf::Vector2u windowSize(displayMgr.GetWindow()->getSize());
@@ -146,5 +148,28 @@ bool InitWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr) {
         }
     }
 
+    return success;
+}
+
+bool CreateGameTitle(DisplayManager& displayMgr, ResourceManager& resourceMgr) {
+    bool success(false);
+    UniqueID fontID("PressStartFont");
+    std::filesystem::path resourcePath(resourceMgr.GetResourceDirectory());
+    std::string fontPath(resourcePath);
+    fontPath.append("/font/PressStart2P-Regular.ttf");
+    success = resourceMgr.LoadResource(fontID, ResourceType::Font, fontPath);
+    sf::Font* font(resourceMgr.GetFont(fontID));
+    const int fontSize(24);
+    const std::pair<float,float> scaleFactor(displayMgr.GetUIScale());
+    sf::Vector2u windowSize(displayMgr.GetWindow()->getSize());
+    std::string titleString("Untitled Game Project");
+    Position titlePos{ ((int)windowSize.x / 2) - (int)(titleString.length() * (fontSize * scaleFactor.first / 2)),
+                       ((int)windowSize.y / 3) - (int)(fontSize * scaleFactor.second / 2) };
+    sf::Text* title(displayMgr.CreateText(font));
+    title->setString(titleString);
+    title->setCharacterSize(fontSize);
+    title->setFillColor(sf::Color::Red);
+    title->setOutlineColor(sf::Color::Black);
+    title->setPosition(titlePos.x, titlePos.y);
     return success;
 }

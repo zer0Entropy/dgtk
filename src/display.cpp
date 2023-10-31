@@ -30,7 +30,10 @@ sf::RenderWindow* DisplayManager::GetWindow() const {
 void DisplayManager::Update() {
     if(window) {
         window->clear();
-        for(auto iterator = spriteList.begin(); iterator != spriteList.end(); iterator++) {
+        for(auto iterator = spriteList.begin(); iterator != spriteList.end(); ++iterator) {
+            window->draw(**iterator);
+        }
+        for(auto iterator = textList.begin(); iterator != textList.end(); ++iterator) {
             window->draw(**iterator);
         }
         window->display();
@@ -46,6 +49,17 @@ sf::Sprite* DisplayManager::CreateSprite(sf::Texture* texture) {
         spriteList.push_back(sprite);
     }
     return sprite;
+}
+
+sf::Text* DisplayManager::CreateText(sf::Font* font) {
+    sf::Text* text(nullptr);
+    if(font) {
+        text = new sf::Text();
+        text->setFont(*font);
+        text->setScale(uiScaleX, uiScaleY);
+        textList.push_back(text);
+    }
+    return text;
 }
 
 std::pair<float, float> DisplayManager::GetUIScale() const {
