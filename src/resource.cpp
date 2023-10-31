@@ -5,8 +5,9 @@
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
-ResourceSystem::ResourceSystem(const std::filesystem::path& directory): System(SystemID::Resource) {
-    SetWorkingDirectory(directory);
+ResourceSystem::ResourceSystem(const std::filesystem::path& resourceDir):
+    System(SystemID::Resource), resourceDirectory(resourceDir) {
+
 }
 
 ResourceSystem::~ResourceSystem() {
@@ -144,32 +145,6 @@ sf::Music* ResourceSystem::GetMusic(UniqueID id) {
         music = iterator->second.get();
     }
     return music;
-}
-
-bool ResourceSystem::SetWorkingDirectory(const std::filesystem::path& directory) {
-    bool success(false);
-    workingDirectory = directory;
-    std::string cfgFilename("game.cfg");
-    std::filesystem::path currentPath(workingDirectory);
-    while(!success) {
-        std::filesystem::path cfgFilePath(currentPath);
-        cfgFilePath.append(cfgFilename);
-
-        if (std::filesystem::exists(cfgFilePath)) {
-            rootDirectory = currentPath;
-            std::filesystem::path resourcePath(currentPath);
-            resourcePath.append("resource");
-            resourceDirectory = resourcePath;
-            success = true;
-        }
-        else if(currentPath.parent_path() != currentPath){
-            currentPath = currentPath.parent_path();
-        }
-        else {
-            return false;
-        }
-    }
-    return success;
 }
 
 const std::filesystem::path& ResourceSystem::GetResourceDirectory() const {

@@ -13,7 +13,7 @@
 
 class LogSystem: public System {
 public:
-    explicit LogSystem(const std::filesystem::path& logPath, const std::filesystem::path& errorPath);
+    explicit LogSystem(const std::filesystem::path& logDirectory);
     LogSystem(const LogSystem& copy) = delete;
     ~LogSystem();
 

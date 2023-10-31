@@ -3,8 +3,12 @@
 //
 #include "../include/log.hpp"
 
-LogSystem::LogSystem(const std::filesystem::path& logPath, const std::filesystem::path& errorPath):
+LogSystem::LogSystem(const std::filesystem::path& logDirectory):
     System(SystemID::Log) {
+    std::string logPath(logDirectory);
+    std::string errorPath(logDirectory);
+    logPath.append("/log.txt");
+    errorPath.append("/error.txt");
     primaryLogFile.open(logPath, std::ios_base::out);
     errorLogFile.open(errorPath, std::ios_base::out);
 }

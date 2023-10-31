@@ -38,7 +38,7 @@ struct ResourceHandle {
 
 class ResourceSystem: public System {
 public:
-    explicit ResourceSystem(const std::filesystem::path& directory);
+    explicit ResourceSystem(const std::filesystem::path& resourceDir);
     ResourceSystem(const ResourceSystem& copy) = delete;
     ~ResourceSystem();
 
@@ -56,7 +56,6 @@ public:
     sf::SoundBuffer* GetSound(UniqueID id);
     sf::Music* GetMusic(UniqueID id);
 
-    bool SetWorkingDirectory(const std::filesystem::path& directory);
     const std::filesystem::path& GetResourceDirectory() const;
 private:
     std::unique_ptr<sf::Texture> LoadTexture(std::string_view path,
@@ -73,8 +72,6 @@ private:
     std::map<UniqueID, std::unique_ptr<sf::SoundBuffer>>    soundMap;
     std::map<UniqueID, std::unique_ptr<sf::Music>>          musicMap;
 
-    std::filesystem::path                                   workingDirectory;
-    std::filesystem::path                                   rootDirectory;
     std::filesystem::path                                   resourceDirectory;
 };
 
