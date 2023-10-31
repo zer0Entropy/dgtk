@@ -3,6 +3,7 @@
 //
 
 #include <SFML/Window/Window.hpp>
+#include "../include/display.hpp"
 
 #ifndef DGTKPROJECT_INPUT_HPP
 #define DGTKPROJECT_INPUT_HPP
@@ -11,10 +12,15 @@
 
 class InputSystem: public System {
 public:
-    void Update();
+    explicit InputSystem(DisplaySystem* displaySysPtr);
+    InputSystem(const InputSystem& copy) = delete;
+    ~InputSystem();
 
+    void Init();
+    void Update();
+    void Shutdown();
 private:
-    sf::Window*     window;
+    DisplaySystem* displaySystem;
 };
 
 #endif //DGTKPROJECT_INPUT_HPP

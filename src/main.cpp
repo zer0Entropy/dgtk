@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <SFML/Graphics.hpp>
 #include "../include/display.hpp"
+#include "../include/input.hpp"
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
@@ -17,24 +18,19 @@ int main()
     displayConfig.windowHeightModifier = -48;
     DisplaySystem displaySystem(displayConfig);
     ResourceSystem resourceSystem(std::filesystem::current_path());
+    InputSystem inputSystem(&displaySystem);
     displaySystem.Init();
     resourceSystem.Init();
+    inputSystem.Init();
 
     CreateWindowFrame(displaySystem, resourceSystem);
     CreateGameTitle(displaySystem, resourceSystem);
 
     sf::RenderWindow* window(displaySystem.GetWindow());
-    while (window->isOpen())
-    {
-        for (auto event = sf::Event{}; window->pollEvent(event);)
-        {
-            if (event.type == sf::Event::Closed)
-            {
-                displaySystem.CloseWindow();
-            }
-        }
-
+    while (window->isOpen()) {
+        inputSystem.Update();
         displaySystem.Update();
+        resourceSystem.Update();
     }
 }
 
