@@ -24,4 +24,17 @@ struct Decoration: public uiObject {
     }
 };
 
+enum class FrameSegment {
+    TopLeft, TopMid, TopRight,
+    MidLeft, Middle, MidRight,
+    BottomLeft, BottomMid, BottomRight,
+    TotalNumFrameSegments
+};
+
+static std::vector<std::string> FrameSegmentNames{
+    "TopLeft", "TopMiddle", "TopRight",
+    "MidLeft", "Middle", "MidRight",
+    "BottomLeft", "BottomMiddle", "BottomRight"
+};
+
 #endif //DGTKPROJECT_DECORATION_HPP

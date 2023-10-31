@@ -3,9 +3,10 @@
 //
 
 #include "../include/resource.hpp"
+#include "../include/decoration.hpp"
 
 bool ResourceManager::LoadResource(UniqueID id, ResourceType type, std::string_view path) {
-    bool success = false;
+    bool success(false);
 
     if (type == ResourceType::Texture) {
         std::unique_ptr<sf::Texture> texture(LoadTexture(path));
@@ -31,11 +32,38 @@ bool ResourceManager::LoadResource(UniqueID id, ResourceType type, std::string_v
             success = true;
             musicMap.insert(std::make_pair(id, std::move(music)));
     }
-
 }
 
     ResourceHandle* resourceHandle = new ResourceHandle(id, type, path);
     resourceMap.insert(std::make_pair(id, resourceHandle));
+    return success;
+}
+
+bool ResourceManager::LoadTexture(UniqueID id, std::string_view path, Position startPos, int width, int height) {
+    bool success(false);
+    std::unique_ptr<sf::Texture> texture(LoadTexture(path, startPos, width, height));
+    if (texture) {
+        success = true;
+        textureMap.insert(std::make_pair(id, std::move(texture)));
+    }
+    return success;
+}
+
+bool ResourceManager::LoadFrameTextures(UniqueID id, std::string_view path, Position topLeftPos, int segmentWidth, int segmentHeight) {
+    bool success(false);
+    Position currentPos(topLeftPos);
+    for(int segmentIndex = (int)FrameSegment::TopLeft; segmentIndex < (int)FrameSegment::TotalNumFrameSegments; segmentIndex++) {
+        auto texture = std::make_unique<sf::Texture>();
+        success = texture->loadFromFile(std::string(path), sf::IntRect(currentPos.x,
+                                                                       currentPos.y,
+                                                                       segmentWidth,
+                                                                       segmentHeight));
+        if(success) {
+            UniqueID segmentID(id);
+            segmentID.append(FrameSegmentNames.at(segmentIndex));
+            textureMap.insert(std::make_pair(segmentID, std::move(texture)));
+        }
+    }
     return success;
 }
 
@@ -84,9 +112,52 @@ sf::Music* ResourceManager::GetMusic(UniqueID id) {
     return music;
 }
 
-std::unique_ptr<sf::Texture> ResourceManager::LoadTexture(std::string_view path) {
+bool ResourceManager::SetWorkingDirectory(const std::filesystem::path& directory) {
+    bool success(false);
+    workingDirectory = directory;
+    std::string cfgFilename("game.cfg");
+    std::filesystem::path currentPath(workingDirectory);
+    while(!success) {
+        std::filesystem::path cfgFilePath(currentPath);
+        cfgFilePath.append(cfgFilename);
+
+        if (std::filesystem::exists(cfgFilePath)) {
+            rootDirectory = currentPath;
+            std::filesystem::path resourcePath(currentPath);
+            resourcePath.append("resource");
+            resourceDirectory = resourcePath;
+            success = true;
+        }
+        else if(currentPath.parent_path() != currentPath){
+            currentPath = currentPath.parent_path();
+        }
+        else {
+            return false;
+        }
+    }
+    return success;
+}
+
+const std::filesystem::path& ResourceManager::GetResourceDirectory() const {
+    return resourceDirectory;
+}
+
+std::unique_ptr<sf::Texture> ResourceManager::LoadTexture(std::string_view path,
+                                                          Position startPos,
+                                                          int width,
+                                                          int height) {
     auto texture = std::make_unique<sf::Texture>();
-    bool success = texture->loadFromFile(std::string(path));
+    bool success(false);
+
+    if(width == 0 && height == 0) {
+        success = texture->loadFromFile(std::string(path));
+    }
+    else {
+        success = texture->loadFromFile(std::string(path), sf::IntRect(startPos.x,
+                                                                       startPos.y,
+                                                                       width,
+                                                                       height));
+    }
     if(!success) {
         texture.release();
         texture = nullptr;

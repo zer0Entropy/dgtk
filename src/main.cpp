@@ -4,24 +4,34 @@
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
+void InitDisplayManager(DisplayManager& displayMgr, const WindowProperties& properties);
+bool InitResourceManager(ResourceManager& resourceMgr, std::filesystem::path workingDirectory);
+
 int main()
 {
     DisplayManager displayMgr;
+
     WindowProperties windowProperties;
     windowProperties.width = 1920;
     windowProperties.height = 1080;
     windowProperties.title = "Test Project";
-    displayMgr.InitWindow(windowProperties);
+    InitDisplayManager(displayMgr, windowProperties);
 
-    std::filesystem::path binDir(std::filesystem::current_path());
-    std::filesystem::path runDir(binDir.parent_path());
-    std::filesystem::path rootDir(runDir.parent_path());
+    ResourceManager resourceMgr;
+    bool success = InitResourceManager(resourceMgr, std::filesystem::current_path());
+    if(!success) {
+        return -1;
+    }
+
+    int textureWidth(24);
+    int textureHeight(24);
+    Position topLeftPos{193, 577};
 
     UniqueID backgroundID("background");
-    std::string backgroundPath(rootDir);
-    backgroundPath.append("/resource/texture/oryx_16bit_fantasy.jpg");
-    ResourceManager resourceMgr;
-    resourceMgr.LoadResource(backgroundID, ResourceType::Texture, backgroundPath);
+    std::string backgroundPath(resourceMgr.GetResourceDirectory());
+    backgroundPath.append("/texture/oryx/oryx_16bit_fantasy_world.png");
+    //resourceMgr.LoadResource(backgroundID, ResourceType::Texture, backgroundPath);
+    resourceMgr.LoadTexture(backgroundID, backgroundPath, topLeftPos, textureWidth, textureHeight);
 
     Decoration background(backgroundID, DecorationType::Background);
     background.texture = resourceMgr.GetTexture(backgroundID);
@@ -42,4 +52,13 @@ int main()
 
         displayMgr.Update();
     }
+}
+
+void InitDisplayManager(DisplayManager& displayMgr, const WindowProperties& properties) {
+    displayMgr.InitWindow(properties);
+}
+
+bool InitResourceManager(ResourceManager& resourceMgr, std::filesystem::path workingDirectory) {
+    bool success = resourceMgr.SetWorkingDirectory(workingDirectory);
+    return success;
 }
