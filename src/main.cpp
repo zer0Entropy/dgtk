@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "../include/display.hpp"
 #include "../include/input.hpp"
+#include "../include/log.hpp"
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
@@ -16,21 +17,35 @@ int main()
     displayConfig.windowProperties.height = 1080;
     displayConfig.windowProperties.title = "Untitled Game Project";
     displayConfig.windowHeightModifier = -48;
+
     DisplaySystem displaySystem(displayConfig);
     ResourceSystem resourceSystem(std::filesystem::current_path());
     InputSystem inputSystem(&displaySystem);
-    displaySystem.Init();
-    resourceSystem.Init();
-    inputSystem.Init();
+
+    std::string logDirectory(resourceSystem.GetResourceDirectory().parent_path());
+    std::string logPath(logDirectory);
+    std::string errorPath(logDirectory);
+    logPath.append("/log.txt");
+    errorPath.append("/error.txt");
+    LogSystem logSystem(logPath, logPath);
+
+    std::vector<System*> systems{ &inputSystem, &displaySystem, &resourceSystem, &logSystem };
+    for(auto iterator = systems.begin(); iterator != systems.end(); ++iterator) {
+        (*iterator)->Init();
+    }
 
     CreateWindowFrame(displaySystem, resourceSystem);
     CreateGameTitle(displaySystem, resourceSystem);
 
     sf::RenderWindow* window(displaySystem.GetWindow());
     while (window->isOpen()) {
-        inputSystem.Update();
-        displaySystem.Update();
-        resourceSystem.Update();
+        for(auto iterator = systems.begin(); iterator != systems.end(); ++iterator) {
+            (*iterator)->Update();
+        }
+    }
+
+    for(auto iterator = systems.begin(); iterator != systems.end(); ++iterator) {
+        (*iterator)->Shutdown();
     }
 }
 

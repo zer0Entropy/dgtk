@@ -5,7 +5,7 @@
 #ifndef DGTKPROJECT_SYSTEM_HPP
 #define DGTKPROJECT_SYSTEM_HPP
 
-enum class SystemID { Display, Resource, Input };
+enum class SystemID { Display = 0, Resource, Input, Log, TotalNumSystems };
 
 class System {
 public:

@@ -25,7 +25,7 @@ struct Decoration: public uiObject {
 };
 
 enum class FrameSegment {
-    TopLeft, TopMid, TopRight,
+    TopLeft = 0, TopMid, TopRight,
     MidLeft, Middle, MidRight,
     BottomLeft, BottomMid, BottomRight,
     TotalNumFrameSegments
