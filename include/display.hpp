@@ -9,6 +9,7 @@
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
+#include "system.hpp"
 
 #ifndef DGTKPROJECT_DISPLAY_HPP
 #define DGTKPROJECT_DISPLAY_HPP
@@ -19,12 +20,27 @@ struct WindowProperties {
     int             height;
 };
 
-class DisplayManager {
+struct DisplayConfig {
+    WindowProperties windowProperties;
+    int             windowHeightModifier;
+    float           uiScaleX;
+    float           uiScaleY;
+};
+
+class DisplaySystem: public System {
 public:
+    explicit DisplaySystem(const DisplayConfig& config);
+    DisplaySystem(const DisplaySystem& copy) = delete;
+    ~DisplaySystem();
+
+    void                        Init();
+    void                        Update();
+    void                        Shutdown();
+
+
     void                        InitWindow(WindowProperties properties);
     void                        CloseWindow();
     sf::RenderWindow*           GetWindow() const;
-    void                        Update();
 
     sf::Sprite*                 CreateSprite(sf::Texture* texture);
     sf::Text*                   CreateText(sf::Font* font);
@@ -34,7 +50,8 @@ private:
     std::vector<sf::Sprite*>                    spriteList;
     std::vector<sf::Text*>                      textList;
 
-    float       uiScaleX, uiScaleY;
+    WindowProperties                            windowProperties;
+    float                                       uiScaleX, uiScaleY;
 };
 
 #endif //DGTKPROJECT_DISPLAY_HPP

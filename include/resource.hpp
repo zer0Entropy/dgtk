@@ -12,6 +12,7 @@
 #include <SFML/Audio/Music.hpp>
 #include "id.hpp"
 #include "position.hpp"
+#include "system.hpp"
 
 #ifndef DGTKPROJECT_RESOURCE_HPP
 #define DGTKPROJECT_RESOURCE_HPP
@@ -35,8 +36,16 @@ struct ResourceHandle {
     }
 };
 
-class ResourceManager {
+class ResourceSystem: public System {
 public:
+    explicit ResourceSystem(const std::filesystem::path& directory);
+    ResourceSystem(const ResourceSystem& copy) = delete;
+    ~ResourceSystem();
+
+    void Init();
+    void Update();
+    void Shutdown();
+
     bool LoadResource(UniqueID id, ResourceType type, std::string_view path);
     bool LoadTexture(UniqueID id, std::string_view path, Position startPos, int width, int height);
     bool LoadFrameTextures(UniqueID id, std::string_view path, Position topLeftPos, int segmentWidth, int segmentHeight);

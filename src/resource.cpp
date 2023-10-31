@@ -5,7 +5,31 @@
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
-bool ResourceManager::LoadResource(UniqueID id, ResourceType type, std::string_view path) {
+ResourceSystem::ResourceSystem(const std::filesystem::path& directory): System(SystemID::Resource) {
+    SetWorkingDirectory(directory);
+}
+
+ResourceSystem::~ResourceSystem() {
+
+}
+
+void ResourceSystem::Init() {
+
+}
+
+void ResourceSystem::Update() {
+
+}
+
+void ResourceSystem::Shutdown() {
+    resourceMap.clear();
+    textureMap.clear();
+    fontMap.clear();
+    soundMap.clear();
+    musicMap.clear();
+}
+
+bool ResourceSystem::LoadResource(UniqueID id, ResourceType type, std::string_view path) {
     bool success(false);
 
     if (type == ResourceType::Texture) {
@@ -39,7 +63,7 @@ bool ResourceManager::LoadResource(UniqueID id, ResourceType type, std::string_v
     return success;
 }
 
-bool ResourceManager::LoadTexture(UniqueID id, std::string_view path, Position startPos, int width, int height) {
+bool ResourceSystem::LoadTexture(UniqueID id, std::string_view path, Position startPos, int width, int height) {
     bool success(false);
     std::unique_ptr<sf::Texture> texture(LoadTexture(path, startPos, width, height));
     if (texture) {
@@ -49,7 +73,7 @@ bool ResourceManager::LoadTexture(UniqueID id, std::string_view path, Position s
     return success;
 }
 
-bool ResourceManager::LoadFrameTextures(UniqueID id, std::string_view path, Position topLeftPos, int segmentWidth, int segmentHeight) {
+bool ResourceSystem::LoadFrameTextures(UniqueID id, std::string_view path, Position topLeftPos, int segmentWidth, int segmentHeight) {
     bool success(false);
     Position currentPos(topLeftPos);
     for(int segmentIndex = (int)FrameSegment::TopLeft; segmentIndex < (int)FrameSegment::TotalNumFrameSegments; ++segmentIndex) {
@@ -77,7 +101,7 @@ bool ResourceManager::LoadFrameTextures(UniqueID id, std::string_view path, Posi
     return success;
 }
 
-ResourceHandle* ResourceManager::GetResourceHandle(UniqueID id) {
+ResourceHandle* ResourceSystem::GetResourceHandle(UniqueID id) {
     ResourceHandle* resourceHandle(nullptr);
     auto iterator(resourceMap.find(id));
     if(iterator != resourceMap.end()) {
@@ -86,7 +110,7 @@ ResourceHandle* ResourceManager::GetResourceHandle(UniqueID id) {
     return resourceHandle;
 }
 
-sf::Texture* ResourceManager::GetTexture(UniqueID id) {
+sf::Texture* ResourceSystem::GetTexture(UniqueID id) {
     sf::Texture* texture(nullptr);
     auto iterator(textureMap.find(id));
     if(iterator != textureMap.end()) {
@@ -95,7 +119,7 @@ sf::Texture* ResourceManager::GetTexture(UniqueID id) {
     return texture;
 }
 
-sf::Font* ResourceManager::GetFont(UniqueID id) {
+sf::Font* ResourceSystem::GetFont(UniqueID id) {
     sf::Font* font(nullptr);
     auto iterator(fontMap.find(id));
     if(iterator != fontMap.end()) {
@@ -104,7 +128,7 @@ sf::Font* ResourceManager::GetFont(UniqueID id) {
     return font;
 }
 
-sf::SoundBuffer* ResourceManager::GetSound(UniqueID id) {
+sf::SoundBuffer* ResourceSystem::GetSound(UniqueID id) {
     sf::SoundBuffer* sound(nullptr);
     auto iterator(soundMap.find(id));
     if(iterator != soundMap.end()) {
@@ -113,7 +137,7 @@ sf::SoundBuffer* ResourceManager::GetSound(UniqueID id) {
     return sound;
 }
 
-sf::Music* ResourceManager::GetMusic(UniqueID id) {
+sf::Music* ResourceSystem::GetMusic(UniqueID id) {
     sf::Music* music(nullptr);
     auto iterator(musicMap.find(id));
     if(iterator != musicMap.end()) {
@@ -122,7 +146,7 @@ sf::Music* ResourceManager::GetMusic(UniqueID id) {
     return music;
 }
 
-bool ResourceManager::SetWorkingDirectory(const std::filesystem::path& directory) {
+bool ResourceSystem::SetWorkingDirectory(const std::filesystem::path& directory) {
     bool success(false);
     workingDirectory = directory;
     std::string cfgFilename("game.cfg");
@@ -148,11 +172,11 @@ bool ResourceManager::SetWorkingDirectory(const std::filesystem::path& directory
     return success;
 }
 
-const std::filesystem::path& ResourceManager::GetResourceDirectory() const {
+const std::filesystem::path& ResourceSystem::GetResourceDirectory() const {
     return resourceDirectory;
 }
 
-std::unique_ptr<sf::Texture> ResourceManager::LoadTexture(std::string_view path,
+std::unique_ptr<sf::Texture> ResourceSystem::LoadTexture(std::string_view path,
                                                           Position startPos,
                                                           int width,
                                                           int height) {
@@ -175,7 +199,7 @@ std::unique_ptr<sf::Texture> ResourceManager::LoadTexture(std::string_view path,
     return std::move(texture);
 }
 
-std::unique_ptr<sf::Font> ResourceManager::LoadFont(std::string_view path) {
+std::unique_ptr<sf::Font> ResourceSystem::LoadFont(std::string_view path) {
     auto font = std::make_unique<sf::Font>();
     bool success = font->loadFromFile(std::string(path));
     if(!success) {
@@ -185,7 +209,7 @@ std::unique_ptr<sf::Font> ResourceManager::LoadFont(std::string_view path) {
     return std::move(font);
 }
 
-std::unique_ptr<sf::SoundBuffer> ResourceManager::LoadSound(std::string_view path) {
+std::unique_ptr<sf::SoundBuffer> ResourceSystem::LoadSound(std::string_view path) {
     auto sound = std::make_unique<sf::SoundBuffer>();
     bool success = sound->loadFromFile(std::string(path));
     if(!success) {
@@ -195,7 +219,7 @@ std::unique_ptr<sf::SoundBuffer> ResourceManager::LoadSound(std::string_view pat
     return std::move(sound);
 }
 
-std::unique_ptr<sf::Music> ResourceManager::LoadMusic(std::string_view path) {
+std::unique_ptr<sf::Music> ResourceSystem::LoadMusic(std::string_view path) {
     auto music = std::make_unique<sf::Music>();
     bool success = music->openFromFile(std::string(path));
     if(!success) {

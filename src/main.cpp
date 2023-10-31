@@ -4,69 +4,54 @@
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
-void InitDisplayManager(DisplayManager& displayMgr, const WindowProperties& properties);
-bool InitResourceManager(ResourceManager& resourceMgr, std::filesystem::path workingDirectory);
-
-bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr);
-bool CreateGameTitle(DisplayManager& displayMgr, ResourceManager& resourceMgr);
+bool CreateWindowFrame(DisplaySystem& display, ResourceSystem& resourceSystem);
+bool CreateGameTitle(DisplaySystem& display, ResourceSystem& resourceSystem);
 
 int main()
 {
-    DisplayManager displayMgr;
+    DisplayConfig displayConfig;
+    displayConfig.uiScaleX = displayConfig.uiScaleY = 2.0f;
+    displayConfig.windowProperties.width = 1920;
+    displayConfig.windowProperties.height = 1080;
+    displayConfig.windowProperties.title = "Untitled Game Project";
+    displayConfig.windowHeightModifier = -48;
+    DisplaySystem displaySystem(displayConfig);
+    ResourceSystem resourceSystem(std::filesystem::current_path());
+    displaySystem.Init();
+    resourceSystem.Init();
 
-    WindowProperties windowProperties;
-    windowProperties.width = 1920;
-    windowProperties.height = 1080;
-    windowProperties.title = "Test Project";
-    InitDisplayManager(displayMgr, windowProperties);
+    CreateWindowFrame(displaySystem, resourceSystem);
+    CreateGameTitle(displaySystem, resourceSystem);
 
-    ResourceManager resourceMgr;
-    bool success = InitResourceManager(resourceMgr, std::filesystem::current_path());
-    if(!success) {
-        return -1;
-    }
-
-    CreateWindowFrame(displayMgr, resourceMgr);
-    CreateGameTitle(displayMgr, resourceMgr);
-
-    sf::RenderWindow* window(displayMgr.GetWindow());
+    sf::RenderWindow* window(displaySystem.GetWindow());
     while (window->isOpen())
     {
         for (auto event = sf::Event{}; window->pollEvent(event);)
         {
             if (event.type == sf::Event::Closed)
             {
-                displayMgr.CloseWindow();
+                displaySystem.CloseWindow();
             }
         }
 
-        displayMgr.Update();
+        displaySystem.Update();
     }
 }
 
-void InitDisplayManager(DisplayManager& displayMgr, const WindowProperties& properties) {
-    displayMgr.InitWindow(properties);
-}
-
-bool InitResourceManager(ResourceManager& resourceMgr, std::filesystem::path workingDirectory) {
-    bool success = resourceMgr.SetWorkingDirectory(workingDirectory);
-    return success;
-}
-
-bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr) {
+bool CreateWindowFrame(DisplaySystem& displaySystem, ResourceSystem& resourceSystem) {
     bool success(false);
 
-    //sf::Vector2u windowSize(displayMgr.GetWindow()->getSize());
-    const std::pair<float,float> scaleFactor(displayMgr.GetUIScale());
+    //sf::Vector2u windowSize(display.GetWindow()->getSize());
+    const std::pair<float,float> scaleFactor(displaySystem.GetUIScale());
     const sf::Vector2u windowSize{ 1920, 1008 };
     int textureWidth(24);
     int textureHeight(24);
     Position topLeftPos{192, 576};
 
     UniqueID frameID("windowFrame");
-    std::string framePath(resourceMgr.GetResourceDirectory());
+    std::string framePath(resourceSystem.GetResourceDirectory());
     framePath.append("/texture/oryx/oryx_16bit_fantasy_world.png");
-    resourceMgr.LoadFrameTextures(frameID, framePath, topLeftPos, textureWidth, textureHeight);
+    resourceSystem.LoadFrameTextures(frameID, framePath, topLeftPos, textureWidth, textureHeight);
 
     textureWidth *= scaleFactor.first;
     textureHeight *= scaleFactor.second;
@@ -75,7 +60,7 @@ bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr)
         UniqueID segmentID(frameID);
         segmentID.append(FrameSegmentNames.at(segmentIndex));
         Decoration frameSegment(segmentID, DecorationType::Frame);
-        frameSegment.texture = resourceMgr.GetTexture(segmentID);
+        frameSegment.texture = resourceSystem.GetTexture(segmentID);
         Position origin{ 0, 0 };
         Position framePos(origin);
         Position step{0, 0};
@@ -130,7 +115,7 @@ bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr)
         if(segmentIndex == (int)FrameSegment::Middle) {
             for(int colIndex = 0; colIndex < (int)(windowSize.y / textureHeight) - 2; ++colIndex) {
                 for(int rowIndex = 0; rowIndex < (int)(windowSize.x / textureWidth) - 2; ++rowIndex) {
-                    sprite = displayMgr.CreateSprite(frameSegment.texture);
+                    sprite = displaySystem.CreateSprite(frameSegment.texture);
                     sprite->setPosition((float)framePos.x, (float)framePos.y);
                     framePos.x += textureWidth;
                 }
@@ -140,7 +125,7 @@ bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr)
         }
         else {
             for (int spriteIndex = 0; spriteIndex < spriteCount; ++spriteIndex) {
-                sprite = displayMgr.CreateSprite(frameSegment.texture);
+                sprite = displaySystem.CreateSprite(frameSegment.texture);
                 sprite->setPosition((float)framePos.x, (float)framePos.y);
                 framePos.x += step.x;
                 framePos.y += step.y;
@@ -151,25 +136,27 @@ bool CreateWindowFrame(DisplayManager& displayMgr, ResourceManager& resourceMgr)
     return success;
 }
 
-bool CreateGameTitle(DisplayManager& displayMgr, ResourceManager& resourceMgr) {
+bool CreateGameTitle(DisplaySystem& displaySystem, ResourceSystem& resourceSystem) {
     bool success(false);
     UniqueID fontID("PressStartFont");
-    std::filesystem::path resourcePath(resourceMgr.GetResourceDirectory());
+    std::filesystem::path resourcePath(resourceSystem.GetResourceDirectory());
     std::string fontPath(resourcePath);
     fontPath.append("/font/PressStart2P-Regular.ttf");
-    success = resourceMgr.LoadResource(fontID, ResourceType::Font, fontPath);
-    sf::Font* font(resourceMgr.GetFont(fontID));
+    success = resourceSystem.LoadResource(fontID, ResourceType::Font, fontPath);
+    sf::Font* font(resourceSystem.GetFont(fontID));
     const int fontSize(24);
-    const std::pair<float,float> scaleFactor(displayMgr.GetUIScale());
-    sf::Vector2u windowSize(displayMgr.GetWindow()->getSize());
+    const std::pair<float,float> scaleFactor(displaySystem.GetUIScale());
+    sf::Vector2u windowSize(displaySystem.GetWindow()->getSize());
     std::string titleString("Untitled Game Project");
+    sf::Color titleColor{ 128, 0, 0, 255 };
     Position titlePos{ ((int)windowSize.x / 2) - (int)(titleString.length() * (fontSize * scaleFactor.first / 2)),
                        ((int)windowSize.y / 3) - (int)(fontSize * scaleFactor.second / 2) };
-    sf::Text* title(displayMgr.CreateText(font));
+    sf::Text* title(displaySystem.CreateText(font));
     title->setString(titleString);
     title->setCharacterSize(fontSize);
-    title->setFillColor(sf::Color::Red);
+    title->setFillColor(titleColor);
     title->setOutlineColor(sf::Color::Black);
+    title->setOutlineThickness(0.4f);
     title->setPosition(titlePos.x, titlePos.y);
     return success;
 }
