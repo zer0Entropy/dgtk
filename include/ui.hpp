@@ -19,7 +19,6 @@ struct uiObjectProperties {
     TextureSource   textureSource;
     Alignment       align;
     Position        origin;
-    Position        relativePosition;
     Position        position;
 };
 

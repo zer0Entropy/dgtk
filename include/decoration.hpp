@@ -21,7 +21,6 @@ struct DecorationProperties {
     std::string         fontPath;
     int                 fontSize;
     sf::Color           fontColor;
-    sf::Color           fillColor;
     sf::Color           outlineColor;
     float               outlineThickness;
     std::string         contents;

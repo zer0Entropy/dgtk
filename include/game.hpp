@@ -36,12 +36,14 @@ public:
 
     void        CreateGameTitle();
 
-    Decoration* CreateDecoration(UniqueID id, const uiObjectProperties& uiProperties, const DecorationProperties& properties);
+    Decoration*         CreateDecoration(UniqueID id, const uiObjectProperties& uiProperties, const DecorationProperties& properties);
 
     DisplaySystem*      GetDisplaySystem() const;
     InputSystem*        GetInputSystem() const;
     LogSystem*          GetLogSystem() const;
     ResourceSystem*     GetResourceSystem() const;
+
+    const DisplayConfig& GetDisplayConfig() const;
 
     Scene*      GenerateScene(GameStatus nextStatus);
 private:

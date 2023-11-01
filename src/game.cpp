@@ -100,6 +100,7 @@ Decoration* Game::CreateDecoration(UniqueID id, const uiObjectProperties& uiProp
     sf::Sprite* sprite(nullptr);
     sf::Text* text(nullptr);
     std::string textureID;
+    Position position{uiProperties.position};
     unsigned int textureWidth, textureHeight;
     switch(properties.decType) {
         case DecorationType::Background:
@@ -116,8 +117,6 @@ Decoration* Game::CreateDecoration(UniqueID id, const uiObjectProperties& uiProp
             decoration = new Decoration(id, DecorationType::Frame);
             decoration->uiProperties = uiProperties;
             decoration->decProperties = properties;
-            //decoration->uiProperties.textureSource.width *= displayConfig.uiScaleX;
-            //decoration->uiProperties.textureSource.height *= displayConfig.uiScaleY;
             for(int segmentIndex = 0; segmentIndex < (int)FrameSegment::TotalNumFrameSegments; ++segmentIndex) {
                 textureID = id + FrameSegmentNames[segmentIndex];
                 decoration->texture = resourceSystem->GetTexture(textureID);
@@ -138,10 +137,27 @@ Decoration* Game::CreateDecoration(UniqueID id, const uiObjectProperties& uiProp
                 decoration->font = font;
                 text = displaySystem->CreateText(font);
                 text->setCharacterSize(properties.fontSize);
-                text->setFillColor(properties.fillColor);
+                text->setFillColor(properties.fontColor);
                 text->setOutlineColor(properties.outlineColor);
                 text->setOutlineThickness(properties.outlineThickness);
                 text->setString(properties.contents);
+                if(uiProperties.align == Alignment::Center) {
+                    int offset = text->getGlobalBounds().width / 2;
+                    if(offset <= position.x) {
+                        position.x -= offset;
+                    } else {
+                        position.x = 0;
+                    }
+                }
+                else if(uiProperties.align == Alignment::Right) {
+                    int offset = text->getGlobalBounds().width;
+                    if(offset <= position.x) {
+                        position.x -= offset;
+                    } else {
+                        position.x = 0;
+                    }
+                }
+                text->setPosition(position.x, position.y);
             break;
     }
     return decoration;
@@ -161,6 +177,10 @@ LogSystem* Game::GetLogSystem() const {
 
 ResourceSystem* Game::GetResourceSystem() const {
     return static_cast<ResourceSystem*>(systems[(int)SystemID::Resource].get());
+}
+
+const DisplayConfig& Game::GetDisplayConfig() const {
+    return displayConfig;
 }
 
 Scene* Game::GenerateScene(GameStatus nextStatus) {

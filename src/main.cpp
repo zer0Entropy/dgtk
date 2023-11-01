@@ -22,6 +22,7 @@ int main()
     */
 
     uiObjectProperties cfgFrame;
+    cfgFrame.uiType = uiObjectType::Decoration;
     cfgFrame.textureSource.pathToFile = "/texture/oryx/oryx_16bit_fantasy_world.png";
     cfgFrame.textureSource.width = 72;
     cfgFrame.textureSource.height = 72;
@@ -31,6 +32,26 @@ int main()
     frameProperties.decType = DecorationType::Frame;
     UniqueID frameID("WindowFrame");
     game.CreateDecoration(frameID, cfgFrame, frameProperties);
+
+    int windowWidth(game.GetDisplayConfig().windowProperties.width);
+    int windowHeight(game.GetDisplayConfig().windowProperties.height - game.GetDisplayConfig().windowHeightModifier);
+
+    uiObjectProperties cfgTitle;
+    cfgTitle.uiType = uiObjectType::Decoration;
+    cfgTitle.align = Alignment::Center;
+    cfgTitle.origin = { windowWidth / 2, windowHeight / 2 };
+    cfgTitle.position = { cfgTitle.origin.x, cfgTitle.origin.y / 2 };
+    DecorationProperties titleProperties;
+    titleProperties.decType = DecorationType::Text;
+    titleProperties.fontID = "PressStart2P";
+    titleProperties.fontPath = "/font/PressStart2P-Regular.ttf";
+    titleProperties.contents = "Untitled Game Project";
+    titleProperties.fontSize = 24;
+    titleProperties.fontColor = sf::Color{128,0,0,255};
+    titleProperties.outlineColor = sf::Color::Black;
+    titleProperties.outlineThickness = 0.4;
+    UniqueID titleID("GameTitle");
+    game.CreateDecoration(titleID, cfgTitle, titleProperties);
 
     auto displaySystem(game.GetDisplaySystem());
     auto window(displaySystem->GetWindow());
