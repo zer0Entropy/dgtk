@@ -230,8 +230,8 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             } break;
         case GameStatus::GamePlay:
             std::filesystem::path texturePath("/texture/oryx/oryx_16bit_fantasy_world.png");
-            int mapWidth(40);
-            int mapHeight(24);
+            int mapWidth(20);
+            int mapHeight(10);
             std::string fullPath(resourceSystem->GetResourceDirectory());
             fullPath.append(texturePath);
             Map* map = GenerateMap(fullPath, mapWidth, mapHeight);
@@ -251,7 +251,9 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
                     }
                     if(texture) {
                         sf::Sprite* sprite(CreateSprite(texture, scene));
-                        sprite->setPosition(x * scene->map->properties.textureWidth, y * scene->map->properties.textureHeight);
+                        ApplyTileScaling(sprite);
+                        sprite->setPosition(x * scene->map->properties.textureWidth * displayConfig.tileScaleX,
+                                            y * scene->map->properties.textureHeight * displayConfig.tileScaleY);
                     }
                 }
             }
@@ -358,6 +360,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
                          (int)windowSize.y - (int)textureSize.y };
         } // BottomRight
         sprite = CreateSprite(frame->texture, currentScene.get());
+        ApplyUIScaling(sprite);
         sprite->setPosition(position.x, position.y);
         segment = new Decoration(childID, DecorationType::Frame );
         frame->children.push_back(segment);
@@ -367,6 +370,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         int segmentCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
             sprite = CreateSprite(frame->texture, currentScene.get());
+            ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -378,6 +382,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         int segmentCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
             sprite = CreateSprite(frame->texture, currentScene.get());
+            ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -389,6 +394,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         int segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
             sprite = CreateSprite(frame->texture, currentScene.get());
+            ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -400,6 +406,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         int segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
             sprite = CreateSprite(frame->texture, currentScene.get());
+            ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -413,6 +420,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         for(int y = 0; y < rowCount; ++y) {
             for(int x = 0; x < columnCount; ++x) {
                 sprite = CreateSprite(frame->texture, currentScene.get());
+                ApplyUIScaling(sprite);
                 sprite->setPosition(position.x, position.y);
                 segment = new Decoration(childID, DecorationType::Frame);
                 frame->children.push_back(segment);
@@ -476,6 +484,20 @@ bool Game::LoadGameConfig() {
             std::string yScaleString(configLine.substr(pos, configLine.length() - pos));
             displayConfig.uiScaleY = atof(yScaleString.c_str());
         }
+        else if(configLine.find("tile_scale_x") != std::string::npos) {
+            while(!std::isdigit(configLine.at(pos))) {
+                pos++;
+            }
+            std::string xScaleString(configLine.substr(pos, configLine.length() - pos));
+            displayConfig.tileScaleX = atof(xScaleString.c_str());
+        }
+        else if(configLine.find("tile_scale_y") != std::string::npos) {
+            while(!std::isdigit(configLine.at(pos))) {
+                pos++;
+            }
+            std::string yScaleString(configLine.substr(pos, configLine.length() - pos));
+            displayConfig.tileScaleY = atof(yScaleString.c_str());
+        }
         else if(configLine.find("window_width") != std::string::npos) {
             while(!std::isdigit(configLine.at(pos))) {
                 pos++;
@@ -514,7 +536,6 @@ bool Game::LoadGameConfig() {
 sf::Sprite* Game::CreateSprite(sf::Texture* texture, Scene* scene) {
     sf::Sprite* sprite(new sf::Sprite);
     sprite->setTexture(*texture);
-    sprite->setScale(displayConfig.uiScaleX, displayConfig.uiScaleY);
     scene->spriteList.push_back(sprite);
     return sprite;
 }
@@ -522,7 +543,14 @@ sf::Sprite* Game::CreateSprite(sf::Texture* texture, Scene* scene) {
 sf::Text* Game::CreateText(sf::Font* font, Scene* scene) {
     sf::Text* text(new sf::Text);
     text->setFont(*font);
-    text->setScale(displayConfig.uiScaleX, displayConfig.uiScaleY);
     scene->textList.push_back(text);
     return text;
+}
+
+void Game::ApplyUIScaling(sf::Transformable* transform) {
+    transform->setScale(displayConfig.uiScaleX, displayConfig.uiScaleY);
+}
+
+void Game::ApplyTileScaling(sf::Transformable* transform) {
+    transform->setScale(displayConfig.tileScaleX, displayConfig.tileScaleY);
 }

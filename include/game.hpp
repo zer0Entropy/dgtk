@@ -61,6 +61,9 @@ private:
     sf::Sprite*         CreateSprite(sf::Texture* texture, Scene* scene);
     sf::Text*           CreateText(sf::Font* font, Scene* scene);
 
+    void                ApplyUIScaling(sf::Transformable* transform);
+    void                ApplyTileScaling(sf::Transformable* transform);
+
     GameStatus                  status;
 
     std::unique_ptr<Scene>      currentScene;

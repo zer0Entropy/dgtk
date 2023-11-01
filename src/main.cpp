@@ -8,9 +8,6 @@
 
 #include "../include/game.hpp"
 
-bool CreateWindowFrame(DisplaySystem& display, ResourceSystem& resourceSystem);
-bool CreateGameTitle(DisplaySystem& display, ResourceSystem& resourceSystem);
-
 int main()
 {
     Game game(std::filesystem::current_path());

@@ -25,6 +25,8 @@ struct DisplayConfig {
     int             windowHeightModifier;
     float           uiScaleX;
     float           uiScaleY;
+    float           tileScaleX;
+    float           tileScaleY;
 };
 
 class Scene;
