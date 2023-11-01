@@ -10,7 +10,8 @@
 
 const std::string Game::configFilename = "game.cfg";
 
-Game::Game(const std::filesystem::path& workingDir): workingDirectory(workingDir), status(GameStatus::MainMenu) {
+Game::Game(const std::filesystem::path& workingDir):
+    workingDirectory(workingDir), status(GameStatus::MainMenu), currentScene(nullptr) {
 }
 
 Game::~Game() {
@@ -64,31 +65,6 @@ void Game::Shutdown() {
 
 GameStatus Game::GetCurrentStatus() const {
     return status;
-}
-
-void Game::CreateGameTitle() {
-    DisplaySystem* displaySystem(static_cast<DisplaySystem*>(systems[(int)SystemID::Display].get()));
-    ResourceSystem* resourceSystem(static_cast<ResourceSystem*>(systems[(int)SystemID::Resource].get()));
-    UniqueID fontID("PressStartFont");
-    std::filesystem::path resourcePath(resourceSystem->GetResourceDirectory());
-    std::string fontPath(resourcePath);
-    fontPath.append("/font/PressStart2P-Regular.ttf");
-    resourceSystem->LoadResource(fontID, ResourceType::Font, fontPath);
-    sf::Font* font(resourceSystem->GetFont(fontID));
-    const int fontSize(24);
-
-    sf::Vector2u windowSize(displaySystem->GetWindow()->getSize());
-    std::string titleString("Untitled Game Project");
-    sf::Color titleColor{ 128, 0, 0, 255 };
-    Position titlePos{ ((int)windowSize.x / 2) - (int)(titleString.length() * (fontSize * displayConfig.uiScaleX / 2)),
-                       ((int)windowSize.y / 3) - (int)(fontSize * displayConfig.uiScaleY / 2) };
-    sf::Text* title(displaySystem->CreateText(font));
-    title->setString(titleString);
-    title->setCharacterSize(fontSize);
-    title->setFillColor(titleColor);
-    title->setOutlineColor(sf::Color::Black);
-    title->setOutlineThickness(0.4f);
-    title->setPosition(titlePos.x, titlePos.y);
 }
 
 Decoration* Game::CreateDecoration(UniqueID id, const uiObjectProperties& uiProperties, const DecorationProperties& properties) {
@@ -183,8 +159,13 @@ const DisplayConfig& Game::GetDisplayConfig() const {
     return displayConfig;
 }
 
+Scene* Game::GetCurrentScene() const {
+    return currentScene.get();
+}
+
 Scene* Game::GenerateScene(GameStatus nextStatus) {
     Scene* scene(new Scene);
+    WindowProperties windowProperties(displayConfig.windowProperties);
     switch(nextStatus) {
         case GameStatus::Error:
             break;
@@ -192,14 +173,63 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             uiObjectProperties frameProperties;
             frameProperties.uiType = uiObjectType::Decoration;
             frameProperties.textureSource.pathToFile = "/texture/oryx/oryx_16bit_fantasy_world.png";
-            frameProperties.textureSource.topLeft = {192, 576};
-            frameProperties.textureSource.width = frameProperties.textureSource.height = 72;
-            scene->uiProperties.push_back(frameProperties);
+            frameProperties.textureSource.width = 72;
+            frameProperties.textureSource.height = 72;
+            frameProperties.textureSource.topLeft = { 192, 576 };
+            frameProperties.origin = {0, 0};
+            UniqueID frameID("WindowFrame");
+            scene->uiProperties.insert(std::make_pair(frameID, frameProperties));
+            DecorationProperties frameDecProperties;
+            frameDecProperties.decType = DecorationType::Frame;
+            scene->decorationProperties.insert(std::make_pair(frameID, frameDecProperties));
+
+            int windowWidth(windowProperties.width);
+            int windowHeight(windowProperties.height - displayConfig.windowHeightModifier);
+
+            uiObjectProperties titleUI;
+            titleUI.uiType = uiObjectType::Decoration;
+            titleUI.align = Alignment::Center;
+            titleUI.origin = { windowWidth / 2, windowHeight / 2 };
+            titleUI.position = { titleUI.origin.x, titleUI.origin.y / 2 };
+            DecorationProperties titleProperties;
+            titleProperties.decType = DecorationType::Text;
+            titleProperties.fontID = "PressStart2P";
+            titleProperties.fontPath = "/font/PressStart2P-Regular.ttf";
+            titleProperties.contents = "Untitled Game Project";
+            titleProperties.fontSize = 24;
+            titleProperties.fontColor = sf::Color{128,0,0,255};
+            titleProperties.outlineColor = sf::Color::Black;
+            titleProperties.outlineThickness = 0.4;
+            UniqueID titleID("GameTitle");
+            scene->uiProperties.insert(std::make_pair(titleID, titleUI));
+            scene->decorationProperties.insert(std::make_pair(titleID, titleProperties));
             } break;
         case GameStatus::GamePlay:
             break;
     }
     return scene;
+}
+
+void Game::TransitionTo(Scene* scene) {
+    if(currentScene) {
+        Scene* oldScene = currentScene.release();
+        delete oldScene;
+        currentScene.reset(scene);
+    }
+    else {
+        currentScene.reset(scene);
+    }
+    for(auto iterator = scene->uiProperties.begin(); iterator != scene->uiProperties.end(); ++iterator) {
+        if((*iterator).second.uiType == uiObjectType::Decoration) {
+            auto uiIterator(scene->uiProperties.find((*iterator).first));
+            auto decIterator(scene->decorationProperties.find((*iterator).first));
+            if(uiIterator != scene->uiProperties.end() && decIterator != scene->decorationProperties.end()) {
+                uiObjectProperties uiProperties = (*uiIterator).second;
+                DecorationProperties decProperties = (*decIterator).second;
+                CreateDecoration((*iterator).first, uiProperties, decProperties);
+            }
+        }
+    }
 }
 
 void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {

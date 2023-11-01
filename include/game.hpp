@@ -34,8 +34,6 @@ public:
 
     GameStatus  GetCurrentStatus() const;
 
-    void        CreateGameTitle();
-
     Decoration*         CreateDecoration(UniqueID id, const uiObjectProperties& uiProperties, const DecorationProperties& properties);
 
     DisplaySystem*      GetDisplaySystem() const;
@@ -45,7 +43,10 @@ public:
 
     const DisplayConfig& GetDisplayConfig() const;
 
-    Scene*      GenerateScene(GameStatus nextStatus);
+    Scene*              GetCurrentScene() const;
+
+    Scene*              GenerateScene(GameStatus nextStatus);
+    void                TransitionTo(Scene* scene);
 private:
     void        AddFrameSegment(Decoration* frame, FrameSegment segment);
 
@@ -54,6 +55,8 @@ private:
     bool        LoadGameConfig();
 
     GameStatus                  status;
+
+    std::unique_ptr<Scene>      currentScene;
 
     std::unique_ptr<System>     systems[(int)SystemID::TotalNumSystems];
 
