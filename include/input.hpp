@@ -10,6 +10,19 @@
 
 #include "system.hpp"
 
+enum class ListenerType {
+    KeyPressListener,
+    MouseMoveListener,
+    MouseClickListener,
+    TotalNumListenerTypes
+};
+
+class InputListener {
+public:
+    virtual ~InputListener() {}
+    virtual void ReceiveInput(const sf::Event& event) = 0;
+};
+
 class InputSystem: public System {
 public:
     explicit InputSystem(DisplaySystem* displaySysPtr);
@@ -19,8 +32,12 @@ public:
     void Init();
     void Update();
     void Shutdown();
+
+    void AddListener(InputListener* listener, ListenerType type);
+    void RemoveListener(InputListener* listener, ListenerType type);
 private:
     DisplaySystem* displaySystem;
+    std::vector<InputListener*>         listeners[(int)ListenerType::TotalNumListenerTypes];
 };
 
 #endif //DGTKPROJECT_INPUT_HPP

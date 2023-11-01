@@ -168,6 +168,7 @@ Scene* Game::GetCurrentScene() const {
 Scene* Game::GenerateScene(GameStatus nextStatus) {
     Scene* scene(new Scene);
     WindowProperties windowProperties(displayConfig.windowProperties);
+    ResourceSystem* resourceSystem(GetResourceSystem());
     switch(nextStatus) {
         case GameStatus::Error:
             break;
@@ -201,19 +202,72 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             titleProperties.fontSize = 48;
             titleProperties.fontColor = sf::Color{128,0,0,255};
             titleProperties.outlineColor = sf::Color::Black;
-            titleProperties.outlineThickness = 0.4;
+            titleProperties.outlineThickness = 1.0;
             UniqueID titleID("GameTitle");
             scene->uiProperties.insert(std::make_pair(titleID, titleUI));
             scene->decorationProperties.insert(std::make_pair(titleID, titleProperties));
+
+            uiObjectProperties pressStartUI;
+            pressStartUI.uiType = uiObjectType::Decoration;
+            pressStartUI.align = Alignment::Center;
+            pressStartUI.origin = { windowWidth / 2, windowHeight/2 };
+            pressStartUI.position = { pressStartUI.origin.x, pressStartUI.origin.y + (3 * pressStartUI.origin.y / 4) };
+            DecorationProperties pressStartProperties;
+            pressStartProperties.decType = DecorationType::Text;
+            pressStartProperties.fontID = "PressStart2P";
+            pressStartProperties.fontPath = "/font/PressStart2P-Regular.ttf";
+            pressStartProperties.contents = "Press any key to continue";
+            pressStartProperties.fontSize = 36;
+            pressStartProperties.fontColor = sf::Color{ 172, 172, 172, 255 };
+            pressStartProperties.outlineColor = sf::Color::Black;
+            pressStartProperties.outlineThickness = 1.0;
+            UniqueID pressStartID("PressAnyKey");
+            scene->uiProperties.insert(std::make_pair(pressStartID, pressStartUI));
+            scene->decorationProperties.insert(std::make_pair(pressStartID, pressStartProperties));
+
+            GameplayTransition* gameplay = new GameplayTransition(this);
+            scene->keyListeners.insert(std::make_pair(pressStartID, gameplay));
             } break;
         case GameStatus::GamePlay:
+            std::filesystem::path texturePath("/texture/oryx/oryx_16bit_fantasy_world.png");
+            int mapWidth(40);
+            int mapHeight(24);
+            std::string fullPath(resourceSystem->GetResourceDirectory());
+            fullPath.append(texturePath);
+            Map* map = GenerateMap(fullPath, mapWidth, mapHeight);
+            scene->map.reset(std::move(map));
+            for(int y = 0; y < mapHeight; ++y) {
+                for(int x = 0; x < mapWidth; ++x) {
+                    sf::Texture* texture(nullptr);
+                    Tile& tile(scene->map->tileArray[y][x]);
+                    if(tile.terrainType == TerrainType::Floor) {
+                        texture = resourceSystem->GetTexture("FloorTexture");
+                    }
+                    else if(tile.terrainType == TerrainType::Wall) {
+                        texture = resourceSystem->GetTexture("WallTexture");
+                    }
+                    else {
+                        texture = nullptr;
+                    }
+                    if(texture) {
+                        sf::Sprite* sprite(CreateSprite(texture, scene));
+                        sprite->setPosition(x * scene->map->properties.textureWidth, y * scene->map->properties.textureHeight);
+                    }
+                }
+            }
             break;
     }
     return scene;
 }
 
 void Game::TransitionTo(Scene* scene) {
+    InputSystem* inputSystem(GetInputSystem());
+
     if(currentScene) {
+        for(auto iterator = scene->keyListeners.begin(); iterator != scene->keyListeners.end(); ++iterator) {
+            inputSystem->RemoveListener(iterator->second, ListenerType::KeyPressListener);
+        } // for each inputListener in Scene
+
         Scene* oldScene = currentScene.release();
         delete oldScene;
         currentScene.reset(scene);
@@ -233,7 +287,11 @@ void Game::TransitionTo(Scene* scene) {
                 currentScene->uiObjects.push_back(std::move(decoration));
             }
         }
-    }
+    } // for each uiProperties in Scene
+
+    for(auto iterator = scene->keyListeners.begin(); iterator != scene->keyListeners.end(); ++iterator) {
+        inputSystem->AddListener(iterator->second, ListenerType::KeyPressListener);
+    } // for each inputListener in Scene
 }
 
 Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int height) {
