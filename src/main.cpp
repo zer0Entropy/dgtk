@@ -16,8 +16,21 @@ int main()
     Game game(std::filesystem::current_path());
     game.Init();
 
+    /*
     game.CreateWindowFrame();
     game.CreateGameTitle();
+    */
+
+    uiObjectProperties cfgFrame;
+    cfgFrame.textureSource.pathToFile = "/texture/oryx/oryx_16bit_fantasy_world.png";
+    cfgFrame.textureSource.width = 72;
+    cfgFrame.textureSource.height = 72;
+    cfgFrame.textureSource.topLeft = { 192, 576 };
+    cfgFrame.origin = {0, 0};
+    DecorationProperties frameProperties;
+    frameProperties.decType = DecorationType::Frame;
+    UniqueID frameID("WindowFrame");
+    game.CreateDecoration(frameID, cfgFrame, frameProperties);
 
     auto displaySystem(game.GetDisplaySystem());
     auto window(displaySystem->GetWindow());

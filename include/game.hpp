@@ -6,6 +6,8 @@
 #include <memory>
 #include "system.hpp"
 #include "display.hpp"
+#include "scene.hpp"
+#include "decoration.hpp"
 
 #ifndef DGTKPROJECT_GAME_HPP
 #define DGTKPROJECT_GAME_HPP
@@ -32,14 +34,19 @@ public:
 
     GameStatus  GetCurrentStatus() const;
 
-    void        CreateWindowFrame();
     void        CreateGameTitle();
+
+    Decoration* CreateDecoration(UniqueID id, const uiObjectProperties& uiProperties, const DecorationProperties& properties);
 
     DisplaySystem*      GetDisplaySystem() const;
     InputSystem*        GetInputSystem() const;
     LogSystem*          GetLogSystem() const;
     ResourceSystem*     GetResourceSystem() const;
+
+    Scene*      GenerateScene(GameStatus nextStatus);
 private:
+    void        AddFrameSegment(Decoration* frame, FrameSegment segment);
+
     bool        FindGameConfig();
 
     bool        LoadGameConfig();

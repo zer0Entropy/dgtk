@@ -25,6 +25,13 @@ enum class ResourceType {
     Music
 };
 
+struct TextureSource {
+    std::string         pathToFile;
+    Position            topLeft;
+    int                 width;
+    int                 height;
+};
+
 struct ResourceHandle {
     UniqueID            id;
     ResourceType        type;

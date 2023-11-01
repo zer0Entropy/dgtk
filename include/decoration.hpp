@@ -11,16 +11,30 @@
 enum class DecorationType {
     Background,
     Frame,
-    Doodad
+    Doodad,
+    Text
+};
+
+struct DecorationProperties {
+    DecorationType      decType;
+    UniqueID            fontID;
+    std::string         fontPath;
+    int                 fontSize;
+    sf::Color           fontColor;
+    sf::Color           fillColor;
+    sf::Color           outlineColor;
+    float               outlineThickness;
+    std::string         contents;
 };
 
 struct Decoration: public uiObject {
-    DecorationType      type;
-    sf::Texture*        texture;
+    DecorationProperties    decProperties;
+    sf::Texture*            texture;
+    sf::Font*               font;
 
     explicit Decoration(UniqueID assignID, DecorationType assignType):
-        uiObject(assignID, uiObjectType::Decoration), type(assignType) {
-
+        uiObject(assignID, uiObjectType::Decoration) {
+        decProperties.decType = assignType;
     }
 };
 

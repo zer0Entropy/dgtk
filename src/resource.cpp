@@ -32,34 +32,36 @@ void ResourceSystem::Shutdown() {
 
 bool ResourceSystem::LoadResource(UniqueID id, ResourceType type, std::string_view path) {
     bool success(false);
+    std::string fullPath(resourceDirectory);
+    fullPath.append(path);
 
     if (type == ResourceType::Texture) {
-        std::unique_ptr<sf::Texture> texture(LoadTexture(path));
+        std::unique_ptr<sf::Texture> texture(LoadTexture(fullPath));
         if (texture) {
             success = true;
             textureMap.insert(std::make_pair(id, std::move(texture)));
         }
     } else if (type == ResourceType::Font) {
-        std::unique_ptr<sf::Font> font(LoadFont(path));
+        std::unique_ptr<sf::Font> font(LoadFont(fullPath));
         if (font) {
             success = true;
             fontMap.insert(std::make_pair(id, std::move(font)));
         }
     } else if (type == ResourceType::Sound) {
-        std::unique_ptr<sf::SoundBuffer> sound(LoadSound(path));
+        std::unique_ptr<sf::SoundBuffer> sound(LoadSound(fullPath));
         if (sound) {
             success = true;
             soundMap.insert(std::make_pair(id, std::move(sound)));
         }
     } else if (type == ResourceType::Music) {
-        std::unique_ptr<sf::Music> music(LoadMusic(path));
+        std::unique_ptr<sf::Music> music(LoadMusic(fullPath));
         if(music) {
             success = true;
             musicMap.insert(std::make_pair(id, std::move(music)));
     }
 }
 
-    ResourceHandle* resourceHandle = new ResourceHandle(id, type, path);
+    ResourceHandle* resourceHandle = new ResourceHandle(id, type, fullPath);
     resourceMap.insert(std::make_pair(id, resourceHandle));
     return success;
 }
@@ -77,9 +79,11 @@ bool ResourceSystem::LoadTexture(UniqueID id, std::string_view path, Position st
 bool ResourceSystem::LoadFrameTextures(UniqueID id, std::string_view path, Position topLeftPos, int segmentWidth, int segmentHeight) {
     bool success(false);
     Position currentPos(topLeftPos);
+    std::string fullPath(resourceDirectory);
+    fullPath.append(path);
     for(int segmentIndex = (int)FrameSegment::TopLeft; segmentIndex < (int)FrameSegment::TotalNumFrameSegments; ++segmentIndex) {
         auto texture = std::make_unique<sf::Texture>();
-        success = texture->loadFromFile(std::string(path), sf::IntRect(currentPos.x,
+        success = texture->loadFromFile(fullPath, sf::IntRect(currentPos.x,
                                                                        currentPos.y,
                                                                        segmentWidth,
                                                                        segmentHeight));

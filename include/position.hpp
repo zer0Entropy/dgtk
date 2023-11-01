@@ -5,6 +5,8 @@
 #ifndef DGTKPROJECT_POSITION_HPP
 #define DGTKPROJECT_POSITION_HPP
 
+enum class Alignment { Unaligned = 0, Left, Center, Right };
+
 struct Position {
     int x;
     int y;
