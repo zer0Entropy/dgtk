@@ -18,9 +18,18 @@ struct Tile {
 constexpr int MaxMapWidth(100);
 constexpr int MaxMapHeight(100);
 
-struct Map {
+struct MapProperties {
     int             width;
     int             height;
+    std::string     texturePath;
+    int             textureWidth;
+    int             textureHeight;
+    Position        wallTexturePos;
+    Position        floorTexturePos;
+};
+
+struct Map {
+    MapProperties   properties;
     Tile            tileArray[MaxMapWidth][MaxMapHeight];
 };
 

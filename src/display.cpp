@@ -4,9 +4,11 @@
 
 
 #include "../include/display.hpp"
+#include "../include/scene.hpp"
+#include "../include/game.hpp"
 
-DisplaySystem::DisplaySystem(const DisplayConfig& config):
-    System(SystemID::Display),
+DisplaySystem::DisplaySystem(const DisplayConfig& config, Game* gamePtr):
+    System(SystemID::Display), game(gamePtr),
     uiScaleX(config.uiScaleX), uiScaleY(config.uiScaleY), windowProperties(config.windowProperties) {
 
 }
@@ -22,12 +24,8 @@ void DisplaySystem::Init() {
 void DisplaySystem::Update() {
     if(window) {
         window->clear();
-        for(auto iterator = spriteList.begin(); iterator != spriteList.end(); ++iterator) {
-            window->draw(**iterator);
-        }
-        for(auto iterator = textList.begin(); iterator != textList.end(); ++iterator) {
-            window->draw(**iterator);
-        }
+        Scene* currentScene = game->GetCurrentScene();
+        DrawScene(currentScene);
         window->display();
     }
 }
@@ -63,26 +61,15 @@ sf::RenderWindow* DisplaySystem::GetWindow() const {
     return window.get();
 }
 
-sf::Sprite* DisplaySystem::CreateSprite(sf::Texture* texture) {
-    sf::Sprite* sprite(nullptr);
-    if(texture) {
-        sprite = new sf::Sprite();
-        sprite->setTexture(*texture);
-        sprite->setScale(uiScaleX, uiScaleY);
-        spriteList.push_back(sprite);
+void DisplaySystem::DrawScene(Scene* scene) {
+    auto &spriteList(scene->spriteList);
+    for(auto spriteIter = spriteList.begin(); spriteIter != spriteList.end(); ++spriteIter) {
+        window->draw(**spriteIter);
     }
-    return sprite;
-}
-
-sf::Text* DisplaySystem::CreateText(sf::Font* font) {
-    sf::Text* text(nullptr);
-    if(font) {
-        text = new sf::Text();
-        text->setFont(*font);
-        text->setScale(uiScaleX, uiScaleY);
-        textList.push_back(text);
+    auto &textList(scene->textList);
+    for(auto textIter = textList.begin(); textIter != textList.end(); ++textIter) {
+        window->draw(**textIter);
     }
-    return text;
 }
 
 std::pair<float, float> DisplaySystem::GetUIScale() const {

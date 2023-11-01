@@ -16,6 +16,8 @@ struct Scene {
     std::map<UniqueID, uiObjectProperties>      uiProperties;
     std::map<UniqueID, DecorationProperties>    decorationProperties;
     Map                                         map;
+    std::vector<sf::Sprite*>                    spriteList;
+    std::vector<sf::Text*>                      textList;
 };
 
 #endif //DGTKPROJECT_SCENE_HPP

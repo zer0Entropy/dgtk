@@ -27,9 +27,12 @@ struct DisplayConfig {
     float           uiScaleY;
 };
 
+class Scene;
+class Game;
+
 class DisplaySystem: public System {
 public:
-    explicit DisplaySystem(const DisplayConfig& config);
+    explicit DisplaySystem(const DisplayConfig& config, Game* gamePtr);
     DisplaySystem(const DisplaySystem& copy) = delete;
     ~DisplaySystem();
 
@@ -42,14 +45,11 @@ public:
     void                        CloseWindow();
     sf::RenderWindow*           GetWindow() const;
 
-    sf::Sprite*                 CreateSprite(sf::Texture* texture);
-    sf::Text*                   CreateText(sf::Font* font);
+    void                        DrawScene(Scene* scene);
     std::pair<float,float>      GetUIScale() const;
 private:
+    Game*                                       game;
     std::unique_ptr<sf::RenderWindow>           window;
-    std::vector<sf::Sprite*>                    spriteList;
-    std::vector<sf::Text*>                      textList;
-
     WindowProperties                            windowProperties;
     float                                       uiScaleX, uiScaleY;
 };

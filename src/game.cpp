@@ -33,7 +33,7 @@ void Game::Init() {
     for(int systemIndex = 0; systemIndex < (int)SystemID::TotalNumSystems; ++systemIndex) {
         switch((SystemID)systemIndex) {
             case SystemID::Display:
-                systems[systemIndex] = std::make_unique<DisplaySystem>(displayConfig);
+                systems[systemIndex] = std::make_unique<DisplaySystem>(displayConfig, this);
                 break;
             case SystemID::Input:
                 systems[systemIndex] = std::make_unique<InputSystem>(static_cast<DisplaySystem*>(systems[(int)SystemID::Display].get()));
@@ -111,7 +111,9 @@ Decoration* Game::CreateDecoration(UniqueID id, const uiObjectProperties& uiProp
                 decoration->uiProperties = uiProperties;
                 decoration->decProperties = properties;
                 decoration->font = font;
-                text = displaySystem->CreateText(font);
+                text = new sf::Text;
+                currentScene->textList.push_back(text);
+                text->setFont(*font);
                 text->setCharacterSize(properties.fontSize);
                 text->setFillColor(properties.fontColor);
                 text->setOutlineColor(properties.outlineColor);
@@ -196,7 +198,7 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             titleProperties.fontID = "PressStart2P";
             titleProperties.fontPath = "/font/PressStart2P-Regular.ttf";
             titleProperties.contents = "Untitled Game Project";
-            titleProperties.fontSize = 24;
+            titleProperties.fontSize = 48;
             titleProperties.fontColor = sf::Color{128,0,0,255};
             titleProperties.outlineColor = sf::Color::Black;
             titleProperties.outlineThickness = 0.4;
@@ -226,10 +228,47 @@ void Game::TransitionTo(Scene* scene) {
             if(uiIterator != scene->uiProperties.end() && decIterator != scene->decorationProperties.end()) {
                 uiObjectProperties uiProperties = (*uiIterator).second;
                 DecorationProperties decProperties = (*decIterator).second;
-                CreateDecoration((*iterator).first, uiProperties, decProperties);
+                Decoration* decPtr = CreateDecoration((*iterator).first, uiProperties, decProperties);
+                std::unique_ptr<Decoration> decoration(decPtr);
+                currentScene->uiObjects.push_back(std::move(decoration));
             }
         }
     }
+}
+
+Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int height) {
+    Map* map(nullptr);
+    if(width <= MaxMapWidth && height <= MaxMapHeight) {
+        map = new Map;
+        map->properties.width = width;
+        map->properties.height = height;
+        map->properties.texturePath = textureSource;
+        map->properties.textureWidth = 24;
+        map->properties.textureHeight = 24;
+        map->properties.floorTexturePos = {408, 600};
+        map->properties.wallTexturePos = {240, 288};
+        UniqueID floorTextureID("FloorTexture");
+        GetResourceSystem()->LoadTexture(floorTextureID,
+                                         map->properties.texturePath,
+                                         map->properties.floorTexturePos,
+                                         map->properties.textureWidth,
+                                         map->properties.textureHeight);
+        UniqueID wallTextureID("WallTexture");
+        GetResourceSystem()->LoadTexture(wallTextureID,
+                                        map->properties.texturePath,
+                                     map->properties.wallTexturePos,
+                                       map->properties.textureWidth,
+                                       map->properties.textureHeight);
+        for(int y = 0; y < height; ++y) {
+            for(int x = 0; x < width; ++x) {
+                Tile& tile(map->tileArray[y][x]);
+                tile.terrainType = TerrainType::Floor;
+                tile.isWalkable = true;
+                tile.isVisible = true;
+            }
+        }
+    }
+    return map;
 }
 
 void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
@@ -260,7 +299,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
             position = { (int)windowSize.x - (int)textureSize.x,
                          (int)windowSize.y - (int)textureSize.y };
         } // BottomRight
-        sprite = displaySystem->CreateSprite(frame->texture);
+        sprite = CreateSprite(frame->texture, currentScene.get());
         sprite->setPosition(position.x, position.y);
         segment = new Decoration(childID, DecorationType::Frame );
         frame->children.push_back(segment);
@@ -269,7 +308,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         position = { origin.x + (int)textureSize.x, origin.y };
         int segmentCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = displaySystem->CreateSprite(frame->texture);
+            sprite = CreateSprite(frame->texture, currentScene.get());
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -280,7 +319,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         position = { origin.x + (int)textureSize.x, (int)windowSize.y - (int)textureSize.y };
         int segmentCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = displaySystem->CreateSprite(frame->texture);
+            sprite = CreateSprite(frame->texture, currentScene.get());
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -291,7 +330,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         position = { origin.x, origin.y + (int)textureSize.y };
         int segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = displaySystem->CreateSprite(frame->texture);
+            sprite = CreateSprite(frame->texture, currentScene.get());
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -302,7 +341,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         position = { (int)windowSize.x - (int)textureSize.x, origin.y + (int)textureSize.y };
         int segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = displaySystem->CreateSprite(frame->texture);
+            sprite = CreateSprite(frame->texture, currentScene.get());
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
             frame->children.push_back(segment);
@@ -315,7 +354,7 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         int columnCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int y = 0; y < rowCount; ++y) {
             for(int x = 0; x < columnCount; ++x) {
-                sprite = displaySystem->CreateSprite(frame->texture);
+                sprite = CreateSprite(frame->texture, currentScene.get());
                 sprite->setPosition(position.x, position.y);
                 segment = new Decoration(childID, DecorationType::Frame);
                 frame->children.push_back(segment);
@@ -412,4 +451,20 @@ bool Game::LoadGameConfig() {
         configFile.close();
     }
     return success;
+}
+
+sf::Sprite* Game::CreateSprite(sf::Texture* texture, Scene* scene) {
+    sf::Sprite* sprite(new sf::Sprite);
+    sprite->setTexture(*texture);
+    sprite->setScale(displayConfig.uiScaleX, displayConfig.uiScaleY);
+    scene->spriteList.push_back(sprite);
+    return sprite;
+}
+
+sf::Text* Game::CreateText(sf::Font* font, Scene* scene) {
+    sf::Text* text(new sf::Text);
+    text->setFont(*font);
+    text->setScale(displayConfig.uiScaleX, displayConfig.uiScaleY);
+    scene->textList.push_back(text);
+    return text;
 }

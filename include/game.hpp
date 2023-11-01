@@ -8,6 +8,7 @@
 #include "display.hpp"
 #include "scene.hpp"
 #include "decoration.hpp"
+#include "map.hpp"
 
 #ifndef DGTKPROJECT_GAME_HPP
 #define DGTKPROJECT_GAME_HPP
@@ -47,12 +48,18 @@ public:
 
     Scene*              GenerateScene(GameStatus nextStatus);
     void                TransitionTo(Scene* scene);
+
+    Map*                GenerateMap(std::filesystem::path textureSource, int width, int height);
+
 private:
-    void        AddFrameSegment(Decoration* frame, FrameSegment segment);
+    void                AddFrameSegment(Decoration* frame, FrameSegment segment);
 
-    bool        FindGameConfig();
+    bool                FindGameConfig();
 
-    bool        LoadGameConfig();
+    bool                LoadGameConfig();
+
+    sf::Sprite*         CreateSprite(sf::Texture* texture, Scene* scene);
+    sf::Text*           CreateText(sf::Font* font, Scene* scene);
 
     GameStatus                  status;
 
