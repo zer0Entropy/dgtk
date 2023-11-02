@@ -70,6 +70,11 @@ void DisplaySystem::DrawScene(Scene* scene) {
     for(auto textIter = textList.begin(); textIter != textList.end(); ++textIter) {
         window->draw(**textIter);
     }
+
+    auto &creatureList(scene->creatures);
+    for(auto creatureIter = creatureList.begin(); creatureIter != creatureList.end(); ++creatureIter) {
+        window->draw(*(*creatureIter)->sprite);
+    }
 }
 
 std::pair<float, float> DisplaySystem::GetUIScale() const {

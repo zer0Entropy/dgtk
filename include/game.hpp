@@ -9,6 +9,7 @@
 #include "scene.hpp"
 #include "decoration.hpp"
 #include "map.hpp"
+#include "player.hpp"
 
 #ifndef DGTKPROJECT_GAME_HPP
 #define DGTKPROJECT_GAME_HPP
@@ -51,6 +52,8 @@ public:
 
     Map*                GenerateMap(std::filesystem::path textureSource, int width, int height);
 
+    bool                MoveCreature(Creature* creature, MapLocation location);
+
 private:
     void                AddFrameSegment(Decoration* frame, FrameSegment segment);
 
@@ -60,6 +63,9 @@ private:
 
     sf::Sprite*         CreateSprite(sf::Texture* texture, Scene* scene);
     sf::Text*           CreateText(sf::Font* font, Scene* scene);
+
+    Player*             CreatePlayer(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
+    Creature*           CreateCreature(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
 
     void                ApplyUIScaling(sf::Transformable* transform);
     void                ApplyTileScaling(sf::Transformable* transform);

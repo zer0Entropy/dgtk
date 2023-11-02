@@ -10,7 +10,7 @@ FetchContent_Declare(SFML
     GIT_TAG 2.6.x)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(dgtkProject src/main.cpp include/decoration.hpp include/ui.hpp include/resource.hpp include/id.hpp src/resource.cpp include/display.hpp src/display.cpp include/position.hpp include/input.hpp include/system.hpp src/input.cpp include/log.hpp src/log.cpp include/game.hpp src/game.cpp include/map.hpp include/scene.hpp src/scene.cpp)
+add_executable(dgtkProject src/main.cpp include/decoration.hpp include/ui.hpp include/resource.hpp include/id.hpp src/resource.cpp include/display.hpp src/display.cpp include/position.hpp include/input.hpp include/system.hpp src/input.cpp include/log.hpp src/log.cpp include/game.hpp src/game.cpp include/map.hpp include/scene.hpp src/scene.cpp include/player.hpp include/creature.hpp src/player.cpp include/location.hpp)
 target_link_libraries(dgtkProject PRIVATE sfml-audio sfml-graphics)
 target_compile_features(dgtkProject PRIVATE cxx_std_17)
 

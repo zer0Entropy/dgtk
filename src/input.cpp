@@ -42,6 +42,7 @@ void InputSystem::AddListener(InputListener* listener, ListenerType type) {
 void InputSystem::RemoveListener(InputListener* listener, ListenerType type) {
     bool found = false;
     std::vector<InputListener*>& listenList(listeners[(int)type]);
+    if(listenList.empty()) {return;}
     for(auto iterator = listenList.begin(); !found && iterator != listenList.end(); ++iterator) {
         if((*iterator) == listener) {
             found = true;

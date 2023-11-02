@@ -255,10 +255,24 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
                         sprite->setPosition(x * scene->map->properties.textureWidth * displayConfig.tileScaleX,
                                             y * scene->map->properties.textureHeight * displayConfig.tileScaleY);
                     }
-                }
-            }
+                } // for(x)
+            } // for(y)
+            fullPath = resourceSystem->GetResourceDirectory();
+            fullPath.append("/texture/oryx/oryx_16bit_fantasy_creatures_trans.png");
+            Position texturePosition{ 24, 24 };
+            UniqueID playerID{"Player1"};
+            resourceSystem->LoadTexture(playerID, fullPath, texturePosition, scene->map->properties.textureWidth, scene->map->properties.textureHeight);
+            MapLocation playerLocation{ mapWidth / 2, mapHeight / 2 };
+            Player* player1(CreatePlayer(playerID, resourceSystem->GetTexture(playerID), playerLocation, scene->map->properties));
+            player1->character->sprite = CreateSprite(player1->character->texture, scene);
+            player1->character->sprite->setPosition(player1->character->position.x, player1->character->position.y);
+            ApplyTileScaling(player1->character->sprite);
+            scene->creatures.push_back(player1->character.get());
+
+            PlayerController* controller = new PlayerController(player1, this);
+            scene->keyListeners.insert(std::make_pair(playerID, controller));
             break;
-    }
+    } // switch
     return scene;
 }
 
@@ -266,7 +280,8 @@ void Game::TransitionTo(Scene* scene) {
     InputSystem* inputSystem(GetInputSystem());
 
     if(currentScene) {
-        for(auto iterator = scene->keyListeners.begin(); iterator != scene->keyListeners.end(); ++iterator) {
+        for(auto iterator = currentScene->keyListeners.begin();
+            iterator != currentScene->keyListeners.end(); ++iterator) {
             inputSystem->RemoveListener(iterator->second, ListenerType::KeyPressListener);
         } // for each inputListener in Scene
 
@@ -294,6 +309,8 @@ void Game::TransitionTo(Scene* scene) {
     for(auto iterator = scene->keyListeners.begin(); iterator != scene->keyListeners.end(); ++iterator) {
         inputSystem->AddListener(iterator->second, ListenerType::KeyPressListener);
     } // for each inputListener in Scene
+
+
 }
 
 Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int height) {
@@ -329,6 +346,24 @@ Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int heigh
         }
     }
     return map;
+}
+
+bool Game::MoveCreature(Creature* creature, MapLocation location) {
+    bool success(false);
+    Position position(creature->position);
+    Map& map(*currentScene->map);
+    int mapWidth(map.properties.width);
+    int mapHeight(map.properties.height);
+    if(location.x >= 0 && location.x < mapWidth
+        && location.y >= 0 && location.y < mapHeight) {
+        Position newPosition{ (int)(location.x * map.properties.textureWidth * displayConfig.tileScaleX),
+                              (int)(location.y * map.properties.textureHeight * displayConfig.tileScaleY) };
+        creature->position = newPosition;
+        creature->sprite->setPosition(newPosition.x, newPosition.y);
+        creature->location = location;
+        success = true;
+    } // check if location is valid
+    return success;
 }
 
 void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
@@ -545,6 +580,23 @@ sf::Text* Game::CreateText(sf::Font* font, Scene* scene) {
     text->setFont(*font);
     scene->textList.push_back(text);
     return text;
+}
+
+Player* Game::CreatePlayer(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties) {
+    Player* player = new Player;
+    player->character.reset(std::move(CreateCreature(name, texture, location, mapProperties)));
+    return player;
+}
+
+Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties) {
+    Creature* creature = new Creature;
+    creature->name = name;
+    creature->texture = texture;
+    creature->location = location;
+    creature->position = { (int)(location.x * mapProperties.textureWidth * displayConfig.tileScaleX),
+                           (int)(location.y * mapProperties.textureHeight * displayConfig.tileScaleY) };
+    creature->sprite = nullptr;
+    return creature;
 }
 
 void Game::ApplyUIScaling(sf::Transformable* transform) {

@@ -8,6 +8,7 @@
 #include "decoration.hpp"
 #include "map.hpp"
 #include "input.hpp"
+#include "player.hpp"
 
 #ifndef DGTKPROJECT_SCENE_HPP
 #define DGTKPROJECT_SCENE_HPP
@@ -20,6 +21,8 @@ struct Scene {
     std::unique_ptr<Map>                        map;
     std::vector<sf::Sprite*>                    spriteList;
     std::vector<sf::Text*>                      textList;
+
+    std::vector<Creature*>                      creatures;
 };
 
 class Game;
@@ -29,7 +32,7 @@ public:
     GameplayTransition(Game* gamePtr);
     GameplayTransition(const GameplayTransition& copy) = default;
     ~GameplayTransition() = default;
-    void ReceiveInput(const sf::Event& event);
+    void ReceiveInput(const sf::Event& event) override;
 private:
     Game* game;
 };

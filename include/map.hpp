@@ -2,6 +2,8 @@
 // Created by zeroc00l on 10/31/23.
 //
 
+#include "location.hpp"
+
 #ifndef DGTKPROJECT_MAP_HPP
 #define DGTKPROJECT_MAP_HPP
 
