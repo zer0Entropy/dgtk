@@ -112,7 +112,6 @@ Decoration* Game::CreateDecoration(UniqueID id, const uiObjectProperties& uiProp
                 decoration->decProperties = properties;
                 decoration->font = font;
                 text = new sf::Text;
-                currentScene->textList.push_back(text);
                 text->setFont(*font);
                 text->setCharacterSize(properties.fontSize);
                 text->setFillColor(properties.fontColor);
@@ -136,6 +135,7 @@ Decoration* Game::CreateDecoration(UniqueID id, const uiObjectProperties& uiProp
                     }
                 }
                 text->setPosition(position.x, position.y);
+                decoration->text.reset(std::move(text));
             break;
     }
     return decoration;
@@ -173,6 +173,7 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
         case GameStatus::Error:
             break;
         case GameStatus::MainMenu: {
+            scene->map.reset(nullptr);
             uiObjectProperties frameProperties;
             frameProperties.uiType = uiObjectType::Decoration;
             frameProperties.textureSource.pathToFile = "/texture/oryx/oryx_16bit_fantasy_world.png";
@@ -230,8 +231,8 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             } break;
         case GameStatus::GamePlay:
             std::filesystem::path texturePath("/texture/oryx/oryx_16bit_fantasy_world.png");
-            int mapWidth(20);
-            int mapHeight(10);
+            int mapWidth(50);
+            int mapHeight(35);
             std::string fullPath(resourceSystem->GetResourceDirectory());
             fullPath.append(texturePath);
             Map* map = GenerateMap(fullPath, mapWidth, mapHeight);
@@ -250,9 +251,9 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
                         texture = nullptr;
                     }
                     if(texture) {
-                        sf::Sprite* sprite(CreateSprite(texture, scene));
-                        ApplyTileScaling(sprite);
-                        sprite->setPosition(x * scene->map->properties.textureWidth * displayConfig.tileScaleX,
+                        tile.sprite->setTexture(*texture);
+                        ApplyTileScaling(tile.sprite.get());
+                        tile.sprite->setPosition(x * scene->map->properties.textureWidth * displayConfig.tileScaleX,
                                             y * scene->map->properties.textureHeight * displayConfig.tileScaleY);
                     }
                 } // for(x)
@@ -262,12 +263,16 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             Position texturePosition{ 24, 24 };
             UniqueID playerID{"Player1"};
             resourceSystem->LoadTexture(playerID, fullPath, texturePosition, scene->map->properties.textureWidth, scene->map->properties.textureHeight);
-            MapLocation playerLocation{ mapWidth / 2, mapHeight / 2 };
+            MapLocation playerLocation{ 2, 2 };
             Player* player1(CreatePlayer(playerID, resourceSystem->GetTexture(playerID), playerLocation, scene->map->properties));
-            player1->character->sprite = CreateSprite(player1->character->texture, scene);
+            player1->character->sprite.reset(new sf::Sprite);
+            player1->character->sprite->setTexture(*resourceSystem->GetTexture(playerID));
             player1->character->sprite->setPosition(player1->character->position.x, player1->character->position.y);
-            ApplyTileScaling(player1->character->sprite);
+            map->tileArray[playerLocation.y][playerLocation.x].creature = player1->character.get();
+            ApplyTileScaling(player1->character->sprite.get());
             scene->creatures.push_back(player1->character.get());
+
+            InitMapView(scene->view, scene->map.get(), playerLocation);
 
             PlayerController* controller = new PlayerController(player1, this);
             scene->keyListeners.insert(std::make_pair(playerID, controller));
@@ -287,16 +292,16 @@ void Game::TransitionTo(Scene* scene) {
 
         Scene* oldScene = currentScene.release();
         delete oldScene;
-        currentScene.reset(scene);
+        currentScene.reset(std::move(scene));
     }
     else {
-        currentScene.reset(scene);
+        currentScene.reset(std::move(scene));
     }
-    for(auto iterator = scene->uiProperties.begin(); iterator != scene->uiProperties.end(); ++iterator) {
+    for(auto iterator = currentScene->uiProperties.begin(); iterator != currentScene->uiProperties.end(); ++iterator) {
         if((*iterator).second.uiType == uiObjectType::Decoration) {
-            auto uiIterator(scene->uiProperties.find((*iterator).first));
-            auto decIterator(scene->decorationProperties.find((*iterator).first));
-            if(uiIterator != scene->uiProperties.end() && decIterator != scene->decorationProperties.end()) {
+            auto uiIterator(currentScene->uiProperties.find((*iterator).first));
+            auto decIterator(currentScene->decorationProperties.find((*iterator).first));
+            if(uiIterator != currentScene->uiProperties.end() && decIterator != currentScene->decorationProperties.end()) {
                 uiObjectProperties uiProperties = (*uiIterator).second;
                 DecorationProperties decProperties = (*decIterator).second;
                 Decoration* decPtr = CreateDecoration((*iterator).first, uiProperties, decProperties);
@@ -306,7 +311,7 @@ void Game::TransitionTo(Scene* scene) {
         }
     } // for each uiProperties in Scene
 
-    for(auto iterator = scene->keyListeners.begin(); iterator != scene->keyListeners.end(); ++iterator) {
+    for(auto iterator = currentScene->keyListeners.begin(); iterator != currentScene->keyListeners.end(); ++iterator) {
         inputSystem->AddListener(iterator->second, ListenerType::KeyPressListener);
     } // for each inputListener in Scene
 
@@ -342,6 +347,8 @@ Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int heigh
                 tile.terrainType = TerrainType::Floor;
                 tile.isWalkable = true;
                 tile.isVisible = true;
+                tile.creature = nullptr;
+                tile.sprite.reset(new sf::Sprite);
             }
         }
     }
@@ -350,18 +357,20 @@ Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int heigh
 
 bool Game::MoveCreature(Creature* creature, MapLocation location) {
     bool success(false);
-    Position position(creature->position);
+    MapLocation oldLocation(creature->location);
     Map& map(*currentScene->map);
+    Tile& oldTile(map.tileArray[oldLocation.y][oldLocation.x]);
     int mapWidth(map.properties.width);
     int mapHeight(map.properties.height);
     if(location.x >= 0 && location.x < mapWidth
         && location.y >= 0 && location.y < mapHeight) {
-        Position newPosition{ (int)(location.x * map.properties.textureWidth * displayConfig.tileScaleX),
-                              (int)(location.y * map.properties.textureHeight * displayConfig.tileScaleY) };
-        creature->position = newPosition;
-        creature->sprite->setPosition(newPosition.x, newPosition.y);
-        creature->location = location;
-        success = true;
+        Tile& newTile(map.tileArray[location.y][location.x]);
+        if(!newTile.creature) {
+            oldTile.creature = nullptr;
+            newTile.creature = creature;
+            creature->location = location;
+            success = true;
+        }
     } // check if location is valid
     return success;
 }
@@ -394,21 +403,25 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
             position = { (int)windowSize.x - (int)textureSize.x,
                          (int)windowSize.y - (int)textureSize.y };
         } // BottomRight
-        sprite = CreateSprite(frame->texture, currentScene.get());
+        sprite = new sf::Sprite;
+        sprite->setTexture(*frame->texture);
         ApplyUIScaling(sprite);
         sprite->setPosition(position.x, position.y);
         segment = new Decoration(childID, DecorationType::Frame );
-        frame->children.push_back(segment);
+        segment->sprite.reset(std::move(sprite));
+        frame->children.push_back(std::unique_ptr<Decoration>(std::move(segment)));
     } // Corners only need 1 segment
     else if(segmentID == FrameSegment::TopMid) {
         position = { origin.x + (int)textureSize.x, origin.y };
         int segmentCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = CreateSprite(frame->texture, currentScene.get());
+            sprite = new sf::Sprite;
+            sprite->setTexture(*frame->texture);
             ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
-            frame->children.push_back(segment);
+            segment->sprite.reset(std::move(sprite));
+            frame->children.push_back(std::unique_ptr<Decoration>(std::move(segment)));
             position.x += textureSize.x;
         }
     } // TopMid
@@ -416,11 +429,13 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         position = { origin.x + (int)textureSize.x, (int)windowSize.y - (int)textureSize.y };
         int segmentCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = CreateSprite(frame->texture, currentScene.get());
+            sprite = new sf::Sprite;
+            sprite->setTexture(*frame->texture);
             ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
-            frame->children.push_back(segment);
+            segment->sprite.reset(std::move(sprite));
+            frame->children.push_back(std::unique_ptr<Decoration>(std::move(segment)));
             position.x += textureSize.x;
         }
     } // BottomMid
@@ -428,11 +443,13 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         position = { origin.x, origin.y + (int)textureSize.y };
         int segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = CreateSprite(frame->texture, currentScene.get());
+            sprite = new sf::Sprite;
+            sprite->setTexture(*frame->texture);
             ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
-            frame->children.push_back(segment);
+            segment->sprite.reset(std::move(sprite));
+            frame->children.push_back(std::unique_ptr<Decoration>(std::move(segment)));
             position.y += textureSize.y;
         }
     } // MidLeft
@@ -440,11 +457,13 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         position = { (int)windowSize.x - (int)textureSize.x, origin.y + (int)textureSize.y };
         int segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
         for(int segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
-            sprite = CreateSprite(frame->texture, currentScene.get());
+            sprite = new sf::Sprite;
+            sprite->setTexture(*frame->texture);
             ApplyUIScaling(sprite);
             sprite->setPosition(position.x, position.y);
             segment = new Decoration(childID, DecorationType::Frame);
-            frame->children.push_back(segment);
+            segment->sprite.reset(std::move(sprite));
+            frame->children.push_back(std::unique_ptr<Decoration>(std::move(segment)));
             position.y += textureSize.y;
         }
     } // MidRight
@@ -454,11 +473,13 @@ void Game::AddFrameSegment(Decoration* frame, FrameSegment segmentID) {
         int columnCount = ((int)windowSize.x / (int)textureSize.x) - 2;
         for(int y = 0; y < rowCount; ++y) {
             for(int x = 0; x < columnCount; ++x) {
-                sprite = CreateSprite(frame->texture, currentScene.get());
+                sprite = new sf::Sprite;
+                sprite->setTexture(*frame->texture);
                 ApplyUIScaling(sprite);
                 sprite->setPosition(position.x, position.y);
                 segment = new Decoration(childID, DecorationType::Frame);
-                frame->children.push_back(segment);
+                segment->sprite.reset(std::move(sprite));
+                frame->children.push_back(std::unique_ptr<Decoration>(std::move(segment)));
                 position.x += textureSize.x;
             }
             position.x = origin.x + (int)textureSize.x;
@@ -568,20 +589,6 @@ bool Game::LoadGameConfig() {
     return success;
 }
 
-sf::Sprite* Game::CreateSprite(sf::Texture* texture, Scene* scene) {
-    sf::Sprite* sprite(new sf::Sprite);
-    sprite->setTexture(*texture);
-    scene->spriteList.push_back(sprite);
-    return sprite;
-}
-
-sf::Text* Game::CreateText(sf::Font* font, Scene* scene) {
-    sf::Text* text(new sf::Text);
-    text->setFont(*font);
-    scene->textList.push_back(text);
-    return text;
-}
-
 Player* Game::CreatePlayer(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties) {
     Player* player = new Player;
     player->character.reset(std::move(CreateCreature(name, texture, location, mapProperties)));
@@ -597,6 +604,16 @@ Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocati
                            (int)(location.y * mapProperties.textureHeight * displayConfig.tileScaleY) };
     creature->sprite = nullptr;
     return creature;
+}
+
+void Game::InitMapView(MapView& view, Map* map, MapLocation center) {
+    int tileWidth(map->properties.textureWidth * displayConfig.tileScaleX);
+    int tileHeight(map->properties.textureHeight * displayConfig.tileScaleY);
+    view.centerLocation = center;
+    view.widthInPixels = displayConfig.windowProperties.width;
+    view.heightInPixels = displayConfig.windowProperties.height;
+    view.widthInTiles = view.widthInPixels / tileWidth;
+    view.heightInTiles = view.heightInPixels / tileHeight;
 }
 
 void Game::ApplyUIScaling(sf::Transformable* transform) {

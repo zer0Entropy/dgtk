@@ -5,6 +5,7 @@
 #include <SFML/Window/Event.hpp>
 #include "../include/player.hpp"
 #include "../include/game.hpp"
+#include "../include/view.hpp"
 
 PlayerController::PlayerController(Player* playerPtr, Game* gamePtr):
     InputListener(), player(playerPtr), game(gamePtr) {
@@ -41,6 +42,9 @@ void PlayerController::ReceiveInput(const sf::Event& event) {
         }
         if(moveDirection != Direction::None) {
             game->MoveCreature(player->character.get(), location);
+            Scene* scene(game->GetCurrentScene());
+
+            ShiftMapView(scene->view, *scene->map, location, moveDirection);
         }
     }
 }

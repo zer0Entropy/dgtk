@@ -10,8 +10,7 @@
 
 #include <memory>
 #include <string>
-
-enum class Direction { None = 0, Up, Down, Left, Right };
+#include "location.hpp"
 
 struct Player {
     std::unique_ptr<Creature> character;

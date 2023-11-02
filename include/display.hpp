@@ -29,8 +29,11 @@ struct DisplayConfig {
     float           tileScaleY;
 };
 
-class Scene;
+//class Scene;
 class Game;
+class Map;
+struct MapView;
+struct uiObject;
 
 class DisplaySystem: public System {
 public:
@@ -47,7 +50,9 @@ public:
     void                        CloseWindow();
     sf::RenderWindow*           GetWindow() const;
 
-    void                        DrawScene(Scene* scene);
+    void                        DrawUIObjects(const std::vector<std::unique_ptr<uiObject>>& uiObjectList);
+    void                        DrawView(const MapView& view, const Map& map);
+    //void                        DrawScene(Scene* scene);
     std::pair<float,float>      GetUIScale() const;
 private:
     Game*                                       game;

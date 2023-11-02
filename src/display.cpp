@@ -25,7 +25,8 @@ void DisplaySystem::Update() {
     if(window) {
         window->clear();
         Scene* currentScene = game->GetCurrentScene();
-        DrawScene(currentScene);
+        DrawUIObjects(currentScene->uiObjects);
+        DrawView(currentScene->view, *currentScene->map.get());
         window->display();
     }
 }
@@ -61,19 +62,47 @@ sf::RenderWindow* DisplaySystem::GetWindow() const {
     return window.get();
 }
 
-void DisplaySystem::DrawScene(Scene* scene) {
-    auto &spriteList(scene->spriteList);
-    for(auto spriteIter = spriteList.begin(); spriteIter != spriteList.end(); ++spriteIter) {
-        window->draw(**spriteIter);
+void DisplaySystem::DrawUIObjects(const std::vector<std::unique_ptr<uiObject>>& uiObjectList) {
+    for(auto iterator = uiObjectList.begin(); iterator != uiObjectList.end(); ++iterator) {
+        uiObject *uiObj(&(*iterator->get()));
+        if(uiObj->sprite) {
+            window->draw(*uiObj->sprite);
+        }
+    } // draw Sprites
+    for(auto iterator = uiObjectList.begin(); iterator != uiObjectList.end(); ++iterator) {
+        uiObject* uiObj(&(*iterator->get()));
+        if (!uiObj->children.empty()) {
+            const auto& childList(uiObj->children);
+            DrawUIObjects(childList);
+        }
+    } // draw Children
+    for(auto iterator = uiObjectList.begin(); iterator != uiObjectList.end(); ++iterator) {
+        uiObject *uiObj(&(*iterator->get()));
+        if(uiObj->text) {
+            window->draw(*uiObj->text);
+        }
+    } // draw Text
+}
+
+void DisplaySystem::DrawView(const MapView& view, const Map& map) {
+    int left(0);
+    int top(0);
+    if(view.centerLocation.x > view.widthInTiles / 2) {
+        left = view.centerLocation.x - (view.widthInTiles / 2);
     }
-    auto &textList(scene->textList);
-    for(auto textIter = textList.begin(); textIter != textList.end(); ++textIter) {
-        window->draw(**textIter);
+    if(view.centerLocation.y > view.heightInTiles / 2) {
+        top = view.centerLocation.y - (view.heightInTiles / 2);
     }
 
-    auto &creatureList(scene->creatures);
-    for(auto creatureIter = creatureList.begin(); creatureIter != creatureList.end(); ++creatureIter) {
-        window->draw(*(*creatureIter)->sprite);
+    for(int y = top; y < top + view.heightInTiles; ++y) {
+        for(int x = left; x < left + view.widthInTiles; ++x) {
+            const Tile& tile(map.tileArray[y][x]);
+            window->draw(*tile.sprite);
+            if(tile.creature) {
+                tile.creature->sprite->setPosition(tile.sprite->getPosition());
+                window->draw(*tile.creature->sprite);
+            }
+        }
     }
 }
 

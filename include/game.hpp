@@ -61,11 +61,9 @@ private:
 
     bool                LoadGameConfig();
 
-    sf::Sprite*         CreateSprite(sf::Texture* texture, Scene* scene);
-    sf::Text*           CreateText(sf::Font* font, Scene* scene);
-
     Player*             CreatePlayer(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
     Creature*           CreateCreature(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
+    void                InitMapView(MapView& view, Map* map, MapLocation center);
 
     void                ApplyUIScaling(sf::Transformable* transform);
     void                ApplyTileScaling(sf::Transformable* transform);

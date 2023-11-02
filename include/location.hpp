@@ -5,6 +5,8 @@
 #ifndef DGTKPROJECT_LOCATION_HPP
 #define DGTKPROJECT_LOCATION_HPP
 
+enum class Direction { None = 0, Up, Down, Left, Right };
+
 struct MapLocation {
     int x;
     int y;

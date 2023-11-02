@@ -2,6 +2,7 @@
 // Created by zeroc00l on 11/1/23.
 //
 
+#include <memory>
 #include <string>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Sprite.hpp>
@@ -21,7 +22,7 @@ struct Creature {
     MapLocation location;
     Position position;
     sf::Texture* texture;
-    sf::Sprite* sprite;
+    std::unique_ptr<sf::Sprite> sprite;
 };
 
 #endif //DGTKPROJECT_CREATURE_HPP

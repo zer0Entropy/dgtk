@@ -2,7 +2,10 @@
 // Created by zeroc00l on 10/31/23.
 //
 
+#include <memory>
+#include <string>
 #include "location.hpp"
+#include "position.hpp"
 
 #ifndef DGTKPROJECT_MAP_HPP
 #define DGTKPROJECT_MAP_HPP
@@ -11,10 +14,18 @@ enum class TerrainType {
     Empty = 0, Floor, Wall
 };
 
+namespace sf {
+    class Sprite;
+}
+
+class Creature;
+
 struct Tile {
-    TerrainType     terrainType;
-    bool            isWalkable;
-    bool            isVisible;
+    TerrainType                     terrainType;
+    bool                            isWalkable;
+    bool                            isVisible;
+    std::unique_ptr<sf::Sprite>     sprite;
+    Creature*                       creature;
 };
 
 constexpr int MaxMapWidth(100);
