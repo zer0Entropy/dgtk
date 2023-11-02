@@ -4,37 +4,17 @@
 
 #include "../include/view.hpp"
 
-bool ShiftMapView(MapView& view, const Map& map, const MapLocation& playerLocation, Direction direction) {
-    bool success(false);
-    MapLocation center(view.centerLocation);
-    int mapWidth(map.properties.width / map.properties.textureWidth);
-    int mapHeight(map.properties.height / map.properties.textureHeight);
-    switch(direction) {
-        case Direction::Up:
-            if(playerLocation.y > center.y && center.y > view.heightInTiles / 2) {
-                view.centerLocation.y--;
-                success = true;
-            }
-            break;
-        case Direction::Down:
-            if(playerLocation.y > center.y && center.y < mapHeight - (view.heightInTiles / 2)) {
-                view.centerLocation.y++;
-                success = true;
-            }
-            break;
-        case Direction::Left:
-            if(playerLocation.x < center.x && center.x > view.widthInTiles / 2) {
-                view.centerLocation.x--;
-                success = true;
-            }
-            break;
-        case Direction::Right:
-            if(playerLocation.x > center.x && center.x < mapWidth - (view.widthInTiles / 2)) {
-                view.centerLocation.x++;
-                success = true;
-            }
-            break;
-        case Direction::None:   default:    break;
+void CenterViewOnPlayer(MapView& view, const Map& map, MapLocation playerLocation) {
+    MapLocation center(playerLocation);
+    if(playerLocation.x < view.widthInTiles / 2) {
+        center.x = view.widthInTiles / 2;
+    } else if(playerLocation.x >= map.properties.width - (view.widthInTiles / 2)) {
+        center.x = map.properties.width - (view.widthInTiles / 2);
     }
-    return success;
+    if(playerLocation.y < view.heightInTiles / 2) {
+        center.y = view.heightInTiles / 2;
+    } else if(playerLocation.y >= map.properties.height - (view.heightInTiles / 2)) {
+        center.y = map.properties.height - (view.heightInTiles / 2);
+    }
+    view.centerLocation = center;
 }

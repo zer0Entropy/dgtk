@@ -263,7 +263,7 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             Position texturePosition{ 24, 24 };
             UniqueID playerID{"Player1"};
             resourceSystem->LoadTexture(playerID, fullPath, texturePosition, scene->map->properties.textureWidth, scene->map->properties.textureHeight);
-            MapLocation playerLocation{ 2, 2 };
+            MapLocation playerLocation{ 17, 24 };
             Player* player1(CreatePlayer(playerID, resourceSystem->GetTexture(playerID), playerLocation, scene->map->properties));
             player1->character->sprite.reset(new sf::Sprite);
             player1->character->sprite->setTexture(*resourceSystem->GetTexture(playerID));
@@ -271,8 +271,8 @@ Scene* Game::GenerateScene(GameStatus nextStatus) {
             map->tileArray[playerLocation.y][playerLocation.x].creature = player1->character.get();
             ApplyTileScaling(player1->character->sprite.get());
             scene->creatures.push_back(player1->character.get());
-
-            InitMapView(scene->view, scene->map.get(), playerLocation);
+            InitMapView(scene->view, scene->map.get());
+            CenterViewOnPlayer(scene->view, *scene->map.get(), playerLocation);
 
             PlayerController* controller = new PlayerController(player1, this);
             scene->keyListeners.insert(std::make_pair(playerID, controller));
@@ -344,8 +344,13 @@ Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int heigh
         for(int y = 0; y < height; ++y) {
             for(int x = 0; x < width; ++x) {
                 Tile& tile(map->tileArray[y][x]);
-                tile.terrainType = TerrainType::Floor;
-                tile.isWalkable = true;
+                if(y == 0 || y == height - 1 || x == 0 || x == width - 1) {
+                    tile.terrainType = TerrainType::Wall;
+                    tile.isWalkable = false;
+                } else {
+                    tile.terrainType = TerrainType::Floor;
+                    tile.isWalkable = true;
+                }
                 tile.isVisible = true;
                 tile.creature = nullptr;
                 tile.sprite.reset(new sf::Sprite);
@@ -365,7 +370,7 @@ bool Game::MoveCreature(Creature* creature, MapLocation location) {
     if(location.x >= 0 && location.x < mapWidth
         && location.y >= 0 && location.y < mapHeight) {
         Tile& newTile(map.tileArray[location.y][location.x]);
-        if(!newTile.creature) {
+        if(newTile.isWalkable && !newTile.creature) {
             oldTile.creature = nullptr;
             newTile.creature = creature;
             creature->location = location;
@@ -606,12 +611,11 @@ Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocati
     return creature;
 }
 
-void Game::InitMapView(MapView& view, Map* map, MapLocation center) {
+void Game::InitMapView(MapView& view, Map* map) {
     int tileWidth(map->properties.textureWidth * displayConfig.tileScaleX);
     int tileHeight(map->properties.textureHeight * displayConfig.tileScaleY);
-    view.centerLocation = center;
     view.widthInPixels = displayConfig.windowProperties.width;
-    view.heightInPixels = displayConfig.windowProperties.height;
+    view.heightInPixels = displayConfig.windowProperties.height - displayConfig.windowHeightModifier;
     view.widthInTiles = view.widthInPixels / tileWidth;
     view.heightInTiles = view.heightInPixels / tileHeight;
 }

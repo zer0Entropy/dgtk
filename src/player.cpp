@@ -41,10 +41,11 @@ void PlayerController::ReceiveInput(const sf::Event& event) {
             case Direction::None:   default:    break;
         }
         if(moveDirection != Direction::None) {
-            game->MoveCreature(player->character.get(), location);
-            Scene* scene(game->GetCurrentScene());
-
-            ShiftMapView(scene->view, *scene->map, location, moveDirection);
+            bool success = game->MoveCreature(player->character.get(), location);
+            if(success) {
+                Scene* scene(game->GetCurrentScene());
+                CenterViewOnPlayer(scene->view, *scene->map.get(), location);
+            }
         }
     }
 }

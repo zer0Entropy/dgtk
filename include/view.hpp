@@ -13,7 +13,7 @@ struct MapView {
     MapLocation centerLocation;
 };
 
-bool ShiftMapView(MapView& view, const Map& map, const MapLocation& playerLocation, Direction direction);
+void CenterViewOnPlayer(MapView& view, const Map& map, MapLocation playerLocation);
 
 
 #endif //DGTKPROJECT_VIEW_HPP

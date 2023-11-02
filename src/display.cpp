@@ -26,7 +26,9 @@ void DisplaySystem::Update() {
         window->clear();
         Scene* currentScene = game->GetCurrentScene();
         DrawUIObjects(currentScene->uiObjects);
-        DrawView(currentScene->view, *currentScene->map.get());
+        if(currentScene->map) {
+            DrawView(currentScene->view, *currentScene->map.get());
+        }
         window->display();
     }
 }
@@ -94,9 +96,13 @@ void DisplaySystem::DrawView(const MapView& view, const Map& map) {
         top = view.centerLocation.y - (view.heightInTiles / 2);
     }
 
+    int tileWidth(map.properties.textureWidth * game->GetDisplayConfig().tileScaleX);
+    int tileHeight(map.properties.textureHeight * game->GetDisplayConfig().tileScaleY);
     for(int y = top; y < top + view.heightInTiles; ++y) {
         for(int x = left; x < left + view.widthInTiles; ++x) {
             const Tile& tile(map.tileArray[y][x]);
+            sf::Sprite* sprite(tile.sprite.get());
+            sprite->setPosition((x - left) * tileWidth, (y - top) * tileHeight);
             window->draw(*tile.sprite);
             if(tile.creature) {
                 tile.creature->sprite->setPosition(tile.sprite->getPosition());
