@@ -17,10 +17,15 @@ enum class ListenerType {
     TotalNumListenerTypes
 };
 
+class Game;
+
 class InputListener {
 public:
+    InputListener(Game* gamePtr): game(gamePtr) {}
     virtual ~InputListener() {}
     virtual void ReceiveInput(const sf::Event& event) = 0;
+protected:
+    Game* game;
 };
 
 class InputSystem: public System {

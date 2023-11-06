@@ -2,6 +2,8 @@
 // Created by zeroc00l on 10/30/23.
 //
 
+#include <fstream>
+#include <nlohmann/json.hpp>
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
 
@@ -15,7 +17,7 @@ ResourceSystem::~ResourceSystem() {
 }
 
 void ResourceSystem::Init() {
-
+    bool success(LoadSceneIndex());
 }
 
 void ResourceSystem::Update() {
@@ -81,7 +83,7 @@ bool ResourceSystem::LoadFrameTextures(UniqueID id, std::string_view path, Posit
     Position currentPos(topLeftPos);
     std::string fullPath(resourceDirectory);
     fullPath.append(path);
-    for(int segmentIndex = (int)FrameSegment::TopLeft; segmentIndex < (int)FrameSegment::TotalNumFrameSegments; ++segmentIndex) {
+    for(int segmentIndex = (int)FrameSegmentID::TopLeft; segmentIndex < (int)FrameSegmentID::TotalNumFrameSegments; ++segmentIndex) {
         auto texture = std::make_unique<sf::Texture>();
         success = texture->loadFromFile(fullPath, sf::IntRect(currentPos.x,
                                                                        currentPos.y,
@@ -102,6 +104,27 @@ bool ResourceSystem::LoadFrameTextures(UniqueID id, std::string_view path, Posit
         else {
             break;
         }
+    }
+    return success;
+}
+
+bool ResourceSystem::LoadSceneIndex() {
+    bool success(false);
+    std::string path(SceneIndexPath);
+    std::ifstream sceneIndex(path);
+    if(sceneIndex.good()) {
+        success = true;
+        nlohmann::json jsonDoc = nlohmann::json::parse(sceneIndex);
+        for(auto sceneIter = jsonDoc.begin(); sceneIter != jsonDoc.end(); ++sceneIter) {
+            for(int index = 0; index < (int)SceneID::TotalNumSceneIDs; ++index) {
+                SceneID sceneID((SceneID)index);
+                std::string_view key(SceneNames.at(sceneID));
+                if(sceneIter->find(key) != sceneIter->end()) {
+                    scenePathMap.insert(std::make_pair(key, *sceneIter));
+                }
+            }
+        }
+        sceneIndex.close();
     }
     return success;
 }
@@ -153,6 +176,16 @@ sf::Music* ResourceSystem::GetMusic(UniqueID id) {
 
 const std::filesystem::path& ResourceSystem::GetResourceDirectory() const {
     return resourceDirectory;
+}
+
+std::filesystem::path ResourceSystem::GetScenePath(UniqueID id) const {
+
+    std::string scenePath(resourceDirectory);
+    auto pathIterator(scenePathMap.find(id));
+    if(pathIterator != scenePathMap.end()) {
+        scenePath = scenePath + pathIterator->second;
+    }
+    return scenePath;
 }
 
 std::unique_ptr<sf::Texture> ResourceSystem::LoadTexture(std::string_view path,
@@ -207,3 +240,4 @@ std::unique_ptr<sf::Music> ResourceSystem::LoadMusic(std::string_view path) {
     }
     return std::move(music);
 }
+

@@ -25,7 +25,7 @@ void DisplaySystem::Update() {
     if(window) {
         window->clear();
         Scene* currentScene = game->GetCurrentScene();
-        DrawUIObjects(currentScene->uiObjects);
+        DrawScene(currentScene);
         if(currentScene->map) {
             DrawView(currentScene->view, *currentScene->map.get());
         }
@@ -64,26 +64,13 @@ sf::RenderWindow* DisplaySystem::GetWindow() const {
     return window.get();
 }
 
-void DisplaySystem::DrawUIObjects(const std::vector<std::unique_ptr<uiObject>>& uiObjectList) {
-    for(auto iterator = uiObjectList.begin(); iterator != uiObjectList.end(); ++iterator) {
-        uiObject *uiObj(&(*iterator->get()));
-        if(uiObj->sprite) {
-            window->draw(*uiObj->sprite);
+void DisplaySystem::DrawScene(Scene* scene) {
+    for (int layerIndex = 0; layerIndex < (int) uiLayerID::TotalNumUILayers; ++layerIndex) {
+        auto& drawLayer(scene->drawLayers[layerIndex]);
+        for(auto iterator = drawLayer.begin(); iterator != drawLayer.end(); ++iterator) {
+            window->draw(**iterator);
         }
-    } // draw Sprites
-    for(auto iterator = uiObjectList.begin(); iterator != uiObjectList.end(); ++iterator) {
-        uiObject* uiObj(&(*iterator->get()));
-        if (!uiObj->children.empty()) {
-            const auto& childList(uiObj->children);
-            DrawUIObjects(childList);
-        }
-    } // draw Children
-    for(auto iterator = uiObjectList.begin(); iterator != uiObjectList.end(); ++iterator) {
-        uiObject *uiObj(&(*iterator->get()));
-        if(uiObj->text) {
-            window->draw(*uiObj->text);
-        }
-    } // draw Text
+    }
 }
 
 void DisplaySystem::DrawView(const MapView& view, const Map& map) {
@@ -110,8 +97,4 @@ void DisplaySystem::DrawView(const MapView& view, const Map& map) {
             }
         }
     }
-}
-
-std::pair<float, float> DisplaySystem::GetUIScale() const {
-    return std::make_pair<float,float>((const float)uiScaleX, (const float)uiScaleY);
 }

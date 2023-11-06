@@ -16,17 +16,47 @@ enum class uiObjectType {
     Scrollbar
 };
 
+enum class uiActionType {
+    None,
+    TransitionToScene
+};
+
+enum class uiActionTrigger {
+    None,
+    OnKeyPress
+};
+
+enum class uiLayerID {
+    Background = 0,
+    WindowFrame,
+    Sprite,
+    Text,
+    TotalNumUILayers
+};
+
+class uiObject;
+
+struct uiAction {
+    uiActionType    type;
+    uiActionTrigger trigger;
+    std::string     resourcePath;
+    uiObject*       actor;
+    uiObject*       target;
+};
+
 struct uiObjectProperties {
     uiObjectType    uiType;
     TextureSource   textureSource;
     Alignment       align;
     Position        origin;
     Position        position;
+    uiLayerID       layer;
 };
 
 struct uiObject {
     UniqueID                                id;
     uiObjectProperties                      uiProperties;
+    uiAction                                action;
     std::vector<std::unique_ptr<uiObject>>  children;
     std::unique_ptr<sf::Sprite>             sprite;
     std::unique_ptr<sf::Text>               text;

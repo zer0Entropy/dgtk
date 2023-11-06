@@ -8,7 +8,7 @@
 #include "../include/view.hpp"
 
 PlayerController::PlayerController(Player* playerPtr, Game* gamePtr):
-    InputListener(), player(playerPtr), game(gamePtr) {
+    InputListener(gamePtr), player(playerPtr), game(gamePtr) {
 
 }
 

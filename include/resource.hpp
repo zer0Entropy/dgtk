@@ -17,6 +17,8 @@
 #ifndef DGTKPROJECT_RESOURCE_HPP
 #define DGTKPROJECT_RESOURCE_HPP
 
+const std::string SceneIndexPath("/scene/index.json");
+
 enum class ResourceType {
     ConfigFile,
     Texture,
@@ -56,6 +58,7 @@ public:
     bool LoadResource(UniqueID id, ResourceType type, std::string_view path);
     bool LoadTexture(UniqueID id, std::string_view path, Position startPos, int width, int height);
     bool LoadFrameTextures(UniqueID id, std::string_view path, Position topLeftPos, int segmentWidth, int segmentHeight);
+    bool LoadSceneIndex();
 
     ResourceHandle* GetResourceHandle(UniqueID id);
     sf::Texture* GetTexture(UniqueID id);
@@ -64,6 +67,7 @@ public:
     sf::Music* GetMusic(UniqueID id);
 
     const std::filesystem::path& GetResourceDirectory() const;
+    std::filesystem::path GetScenePath(UniqueID sceneID) const;
 private:
     std::unique_ptr<sf::Texture> LoadTexture(std::string_view path,
                                              Position startPos = {0, 0},
@@ -78,6 +82,7 @@ private:
     std::map<UniqueID, std::unique_ptr<sf::Font>>           fontMap;
     std::map<UniqueID, std::unique_ptr<sf::SoundBuffer>>    soundMap;
     std::map<UniqueID, std::unique_ptr<sf::Music>>          musicMap;
+    std::map<UniqueID, std::string>                         scenePathMap;
 
     std::filesystem::path                                   resourceDirectory;
 };

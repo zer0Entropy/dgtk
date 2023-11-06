@@ -36,8 +36,6 @@ public:
 
     GameStatus  GetCurrentStatus() const;
 
-    Decoration*         CreateDecoration(UniqueID id, const uiObjectProperties& uiProperties, const DecorationProperties& properties);
-
     DisplaySystem*      GetDisplaySystem() const;
     InputSystem*        GetInputSystem() const;
     LogSystem*          GetLogSystem() const;
@@ -47,16 +45,18 @@ public:
 
     Scene*              GetCurrentScene() const;
 
-    Scene*              GenerateScene(GameStatus nextStatus);
+    void                ApplyUIScaling(sf::Transformable* transform);
+    void                ApplyTileScaling(sf::Transformable* transform);
+
     void                TransitionTo(Scene* scene);
 
     Map*                GenerateMap(std::filesystem::path textureSource, int width, int height);
 
     bool                MoveCreature(Creature* creature, MapLocation location);
 
-private:
-    void                AddFrameSegment(Decoration* frame, FrameSegment segment);
+    Decoration*         CreateDecoration(UniqueID id, DecorationType decType);
 
+private:
     bool                FindGameConfig();
 
     bool                LoadGameConfig();
@@ -64,9 +64,6 @@ private:
     Player*             CreatePlayer(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
     Creature*           CreateCreature(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
     void                InitMapView(MapView& view, Map* map);
-
-    void                ApplyUIScaling(sf::Transformable* transform);
-    void                ApplyTileScaling(sf::Transformable* transform);
 
     GameStatus                  status;
 

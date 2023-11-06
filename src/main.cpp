@@ -13,7 +13,10 @@ int main()
     Game game(std::filesystem::current_path());
     game.Init();
 
-    Scene* mainMenu(game.GenerateScene(GameStatus::MainMenu));
+    //Scene* mainMenu(game.GenerateScene(GameStatus::MainMenu));
+    //game.TransitionTo(mainMenu);
+    std::string scenePath("/scene/mainMenu.json");
+    Scene* mainMenu(LoadScene(scenePath, &game));
     game.TransitionTo(mainMenu);
 
     auto displaySystem(game.GetDisplaySystem());
