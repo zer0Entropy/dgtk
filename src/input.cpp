@@ -22,13 +22,14 @@ void InputSystem::Update() {
         if (event.type == sf::Event::Closed) {
             displaySystem->CloseWindow();
         } // if(Event::Closed)
-        for(int listenTypeIndex = 0; listenTypeIndex < (int)ListenerType::TotalNumListenerTypes; ++listenTypeIndex) {
-            for (auto iterator = listeners[listenTypeIndex].begin();
-                        iterator != listeners[listenTypeIndex].end(); ++iterator) {
-                (*iterator)->ReceiveInput(event);
+        for(int listenTypeIndex = 0; !interrupt && listenTypeIndex < (int)ListenerType::TotalNumListenerTypes; ++listenTypeIndex) {
+            auto& listenerList(listeners[listenTypeIndex]);
+            for(InputListener* listener: listenerList) {
+                listener->ReceiveInput(event);
             } // for each listener
         } // for each ListenerType
     } // for(event)
+    interrupt = false;
 }
 
 void InputSystem::Shutdown() {

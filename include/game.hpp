@@ -56,6 +56,8 @@ public:
 
     Decoration*         CreateDecoration(UniqueID id, DecorationType decType);
 
+    void                SignalInterrupt();
+
 private:
     bool                FindGameConfig();
 

@@ -234,6 +234,7 @@ Scene* LoadScene(std::string_view pathToJSON, Game* game) {
                                     auto findResourcePath = findUIAction.find(SceneKeys.at(SceneKeyID::ResourcePath));
                                     std::string typeString(findActionType->get<std::string>());
                                     std::string triggerString(findActionTrigger->get<std::string>());
+                                    std::string resourcePath(findResourcePath->get<std::string>());
                                     if(typeString.compare("transition_to_scene") == 0) {
                                         uiObjectPtr->action.type = uiActionType::TransitionToScene;
                                     } else {
@@ -244,7 +245,7 @@ Scene* LoadScene(std::string_view pathToJSON, Game* game) {
                                     } else {
                                         uiObjectPtr->action.trigger = uiActionTrigger::None;
                                     }
-                                    uiObjectPtr->action.resourcePath = findResourcePath->get<std::string>();
+                                    uiObjectPtr->action.resourcePath = resourcePath;
                                 } // if(key == UIAction)
                             } // if(findPropertyKey)
                         } // for(propertyKeyIndex)
@@ -312,7 +313,7 @@ Scene* LoadScene(std::string_view pathToJSON, Game* game) {
                                 }
                             }
                         }
-                        AddToScene(scene, uiObjectPtr);
+                        AddToScene(game, scene, uiObjectPtr);
                     } // for(uiObj: uiObjectsJSON)
 
                 } // if(keyID == uiObjects)
@@ -323,7 +324,7 @@ Scene* LoadScene(std::string_view pathToJSON, Game* game) {
     return scene;
 }
 
-void AddToScene(Scene* scene, uiObject* uiObjectPtr) {
+void AddToScene(Game* game, Scene* scene, uiObject* uiObjectPtr) {
     auto& drawLayer(scene->drawLayers[(int)uiObjectPtr->uiProperties.layer]);
     if(uiObjectPtr->sprite != nullptr) {
         drawLayer.push_back(uiObjectPtr->sprite.get());
@@ -331,6 +332,16 @@ void AddToScene(Scene* scene, uiObject* uiObjectPtr) {
     if(uiObjectPtr->text != nullptr) {
         drawLayer.push_back(uiObjectPtr->text.get());
     }
+
+    if(uiObjectPtr->action.type != uiActionType::None) {
+        if(uiObjectPtr->action.trigger == uiActionTrigger::OnKeyPress) {
+            std::string path(game->GetResourceSystem()->GetResourceDirectory());
+            path.append(uiObjectPtr->action.resourcePath);
+            SceneTransition* transition = new SceneTransition(uiObjectPtr->action.trigger, path, game);
+            scene->keyListeners.insert(std::make_pair(uiObjectPtr->id, transition));
+        }
+    }
+
     scene->uiObjects.push_back(std::unique_ptr<uiObject>(std::move(uiObjectPtr)));
 
     uiObject* sceneUI(scene->uiObjects.back().get());
@@ -476,15 +487,23 @@ bool ContainsOperator(std::string_view arithmeticString) {
     return operatorFound;
 }
 
-GameplayTransition::GameplayTransition(Game* gamePtr): InputListener(gamePtr), game(gamePtr) {
+SceneTransition::SceneTransition(uiActionTrigger triggerType, std::string_view pathToScene, Game* gamePtr):
+    InputListener(gamePtr), trigger(triggerType), scenePath(pathToScene), game(gamePtr) {
 
 }
 
-void GameplayTransition::ReceiveInput(const sf::Event& event) {
-    if(event.type == sf::Event::EventType::KeyPressed) {
-        std::string scenePath(game->GetResourceSystem()->GetScenePath(SceneNames.at(SceneID::Gameplay)));
-        Scene* gameplay = LoadScene(scenePath, game);
-        game->TransitionTo(gameplay);
+void SceneTransition::ReceiveInput(const sf::Event& event) {
+    Scene* scene(nullptr);
+
+    if(trigger == uiActionTrigger::OnKeyPress) {
+
+        if (event.type == sf::Event::EventType::KeyPressed) {
+            scene = LoadScene(scenePath, game);
+        } // sf::Event::KeyPressed
+
+    } // trigger: OnKeyPress
+
+    if(scene) {
+        game->TransitionTo(scene);
     }
 }
-

@@ -103,6 +103,8 @@ void Game::TransitionTo(Scene* scene) {
     InputSystem* inputSystem(GetInputSystem());
 
     if(currentScene) {
+        SignalInterrupt();
+
         for(auto iterator = currentScene->keyListeners.begin();
             iterator != currentScene->keyListeners.end(); ++iterator) {
             inputSystem->RemoveListener(iterator->second, ListenerType::KeyPressListener);
@@ -302,6 +304,12 @@ Decoration* Game::CreateDecoration(UniqueID id, DecorationType decType) {
     }
 
     return decoration;
+}
+
+void Game::SignalInterrupt() {
+    for(auto& system : systems) {
+        system.get()->SetInterrupt();
+    }
 }
 
 Player* Game::CreatePlayer(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties) {

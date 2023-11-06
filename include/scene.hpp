@@ -75,17 +75,19 @@ SceneID GetSceneID(UniqueID sceneName);
 
 Scene*  LoadScene(std::string_view pathToJSON, Game* game);
 
-void    AddToScene(Scene* scene, uiObject* uiObjectPtr);
+void    AddToScene(Game* game, Scene* scene, uiObject* uiObjectPtr);
 
 void    AddFrameSegment(Game* game, Decoration* frame, FrameSegmentID segment);
 
-class GameplayTransition: public InputListener {
+class SceneTransition: public InputListener {
 public:
-    GameplayTransition(Game* gamePtr);
-    GameplayTransition(const GameplayTransition& copy) = default;
-    ~GameplayTransition() = default;
+    SceneTransition(uiActionTrigger triggerType, std::string_view pathToScene, Game* gamePtr);
+    SceneTransition(const SceneTransition& copy) = default;
+    ~SceneTransition() = default;
     void ReceiveInput(const sf::Event& event) override;
 private:
+    uiActionTrigger trigger;
+    std::string scenePath;
     Game* game;
 };
 

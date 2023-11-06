@@ -40,8 +40,8 @@ struct uiAction {
     uiActionType    type;
     uiActionTrigger trigger;
     std::string     resourcePath;
-    uiObject*       actor;
-    uiObject*       target;
+    UniqueID        actorID;
+    UniqueID        targetID;
 };
 
 struct uiObjectProperties {
