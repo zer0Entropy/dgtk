@@ -110,7 +110,8 @@ bool ResourceSystem::LoadFrameTextures(UniqueID id, std::string_view path, Posit
 
 bool ResourceSystem::LoadSceneIndex() {
     bool success(false);
-    std::string path(SceneIndexPath);
+    std::string path(resourceDirectory);
+    path.append(SceneIndexPath);
     std::ifstream sceneIndex(path);
     if(sceneIndex.good()) {
         success = true;
@@ -120,7 +121,9 @@ bool ResourceSystem::LoadSceneIndex() {
                 SceneID sceneID((SceneID)index);
                 std::string_view key(SceneNames.at(sceneID));
                 if(sceneIter->find(key) != sceneIter->end()) {
-                    scenePathMap.insert(std::make_pair(key, *sceneIter));
+                    auto findKey(*sceneIter->find(key));
+                    std::string value(findKey.get<std::string>());
+                    scenePathMap.insert(std::make_pair(std::string{key}, value));
                 }
             }
         }

@@ -21,8 +21,6 @@ SceneID GetSceneID(UniqueID sceneName) {
 
 Scene* LoadScene(std::string_view pathToJSON, Game* game) {
     Scene* scene(nullptr);
-    std::string fullPath(game->GetResourceSystem()->GetResourceDirectory());
-    fullPath.append(pathToJSON);
 
     const DisplayConfig& displayConfig(game->GetDisplayConfig());
     int winHeight(displayConfig.windowProperties.height - displayConfig.windowHeightModifier);
@@ -31,7 +29,7 @@ Scene* LoadScene(std::string_view pathToJSON, Game* game) {
     mathParser.RegisterVariable("window_height", displayConfig.windowProperties.height - displayConfig.windowHeightModifier);
 
     nlohmann::json jsonDoc;
-    std::ifstream jsonFile(fullPath);
+    std::ifstream jsonFile(std::string{pathToJSON});
     if(!jsonFile.good()) {
         // TODO: Report error here!
         return scene;
