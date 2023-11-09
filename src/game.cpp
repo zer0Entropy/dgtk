@@ -130,59 +130,29 @@ void Game::TransitionTo(Scene* scene) {
         DecorationProperties    decProperties = *decorationIter;
         uiObjectProperties uiProperties = FindUIObjProperties(scene, decorationIter->id);
         Decoration* decoration = CreateDecoration(uiProperties, decProperties);
-
         decoration->decProperties = decProperties;
         decoration->uiProperties = uiProperties;
         scene->uiObjects.push_back(decoration);
+        if(uiProperties.actionType != uiActionType::None &&
+           uiProperties.actionTrigger != uiActionTrigger::None) {
+            switch(uiProperties.actionType) {
+                case uiActionType::TransitionToScene:
+                    scene->keyListeners.insert(std::make_pair(uiProperties.id, new SceneTransition(
+                            uiProperties.actionTrigger,
+                        uiProperties.transitionToScene,
+                                this)));
+                    break;
+                case uiActionType::None:    default:
+                    break;
+            }
+        }
     }
 
     for(auto iterator = currentScene->keyListeners.begin(); iterator != currentScene->keyListeners.end(); ++iterator) {
         inputSystem->AddListener(iterator->second, ListenerType::KeyPressListener);
     } // for each inputListener in Scene
 }
-/*
-Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int height) {
-    Map* map(nullptr);
-    if(width <= MaxMapWidth && height <= MaxMapHeight) {
-        map = new Map;
-        map->properties.width = width;
-        map->properties.height = height;
-        map->properties.texturePath = textureSource;
-        map->properties.textureWidth = 24;
-        map->properties.textureHeight = 24;
-        map->properties.floorTexturePos = {408, 600};
-        map->properties.wallTexturePos = {240, 288};
-        UniqueID floorTextureID("FloorTexture");
-        GetResourceSystem()->LoadTexture(floorTextureID,
-                                         map->properties.texturePath,
-                                         map->properties.floorTexturePos,
-                                         map->properties.textureWidth,
-                                         map->properties.textureHeight);
-        UniqueID wallTextureID("WallTexture");
-        GetResourceSystem()->LoadTexture(wallTextureID,
-                                        map->properties.texturePath,
-                                     map->properties.wallTexturePos,
-                                       map->properties.textureWidth,
-                                       map->properties.textureHeight);
-        for(int y = 0; y < height; ++y) {
-            for(int x = 0; x < width; ++x) {
-                Tile& tile(map->tileArray[y][x]);
-                if(y == 0 || y == height - 1 || x == 0 || x == width - 1) {
-                    tile.terrainType = TerrainType::Wall;
-                    tile.isWalkable = false;
-                } else {
-                    tile.terrainType = TerrainType::Floor;
-                    tile.isWalkable = true;
-                }
-                tile.isVisible = true;
-                tile.creature = nullptr;
-                tile.sprite.reset(new sf::Sprite);
-            }
-        }
-    }
-    return map;
-}
-*/
+
 bool Game::MoveCreature(Creature* creature, MapLocation location) {
     bool success(false);
     MapLocation oldLocation(creature->location);
@@ -603,13 +573,4 @@ Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocati
                            (int)(location.y * mapProperties.textureHeight * displayConfig.tileScaleY) };
     creature->sprite = nullptr;
     return creature;
-}
-
-void Game::InitMapView(MapView& view, Map* map) {
-    int tileWidth(map->properties.textureWidth * displayConfig.tileScaleX);
-    int tileHeight(map->properties.textureHeight * displayConfig.tileScaleY);
-    view.widthInPixels = displayConfig.windowProperties.width;
-    view.heightInPixels = displayConfig.windowProperties.height - displayConfig.windowHeightModifier;
-    view.widthInTiles = view.widthInPixels / tileWidth;
-    view.heightInTiles = view.heightInPixels / tileHeight;
 }

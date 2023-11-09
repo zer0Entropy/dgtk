@@ -24,13 +24,20 @@ void DisplaySystem::Init() {
 void DisplaySystem::Update() {
     if(window) {
         window->clear();
+
         Scene* currentScene = game->GetCurrentScene();
         RenderScene(currentScene);
         DrawScene();
+
         if(currentScene->map) {
             DrawView(*currentScene->mapView, *currentScene->map.get());
         }
+
         window->display();
+        for(int index = 0; index < (int)LayerID::TotalNumLayerIDs; ++index) {
+            std::vector<sf::Drawable*>& currentLayer = drawLayers[index];
+            currentLayer.clear();
+        }
     }
 }
 

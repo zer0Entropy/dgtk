@@ -26,7 +26,7 @@ enum class uiPropertyID {
         TextureHeight,
         ActionType,
         ActionTrigger,
-        ResourcePath,
+        TransitionToScene,
         TotalNumUIPropertyIDs
 };
 
@@ -43,7 +43,7 @@ const std::vector<std::string> uiPropertyNames{
         {"texture_height"},
         {"action_type"},
         {"action_trigger"},
-        {"resource_path"}
+        {"transition_to_scene"}
 };
 
 enum class uiObjectType {
@@ -80,10 +80,10 @@ struct uiObjectProperties {
     Alignment       align;
     Position        origin;
     Position        position;
-    LayerID       layer;
+    LayerID         layer;
     uiActionType    actionType;
     uiActionTrigger actionTrigger;
-    std::string     resourcePath;
+    UniqueID        transitionToScene;
 };
 
 struct uiObject {

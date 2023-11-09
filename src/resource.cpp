@@ -118,15 +118,17 @@ bool ResourceSystem::LoadSceneIndex() {
     std::ifstream sceneIndex(path);
     if(sceneIndex.good()) {
         success = true;
+
         nlohmann::json jsonDoc = nlohmann::json::parse(sceneIndex);
-        for(auto sceneIter = jsonDoc.begin(); sceneIter != jsonDoc.end(); ++sceneIter) {
+        auto sceneIndexJSON = jsonDoc.begin().value();
+        for(auto sceneIter = sceneIndexJSON.begin(); sceneIter != sceneIndexJSON.end(); ++sceneIter) {
             for(int index = 0; index < (int)SceneID::TotalNumSceneIDs; ++index) {
-                SceneID sceneID((SceneID)index);
-                std::string_view key(SceneNames.at(sceneID));
-                if(sceneIter->find(key) != sceneIter->end()) {
-                    auto findKey(*sceneIter->find(key));
-                    std::string value(findKey.get<std::string>());
-                    scenePathMap.insert(std::make_pair(std::string{key}, value));
+                SceneID sceneID((SceneID) index);
+                std::string_view findKey(SceneNames.at(sceneID));
+                std::string currentKey = sceneIter.key();
+                if(currentKey.compare(findKey) == 0) {
+                    std::string value = sceneIter.value();
+                    scenePathMap.insert(std::make_pair(currentKey, value));
                 }
             }
         }

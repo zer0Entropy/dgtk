@@ -52,8 +52,6 @@ public:
 
     void                TransitionTo(Scene* scene);
 
-    //Map*                GenerateMap(std::filesystem::path textureSource, int width, int height);
-
     bool                MoveCreature(Creature* creature, MapLocation location);
 
     Decoration*         CreateFrameSegment(Decoration* frame, FrameSegmentID segmentID);
@@ -71,7 +69,6 @@ private:
 
     Player*             CreatePlayer(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
     Creature*           CreateCreature(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties);
-    void                InitMapView(MapView& view, Map* map);
 
     GameStatus                  status;
 

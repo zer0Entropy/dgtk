@@ -122,8 +122,8 @@ uiObjectProperties ReadUIObjPropertiesFromJSON(const nlohmann::json& jsonDoc, Ma
             } else if(actionTriggerString.compare("on_key_press") == 0) {
                 uiObjProperties.actionTrigger = uiActionTrigger::OnKeyPress;
             }
-        }  else if(key.compare(uiPropertyNames.at((int)uiPropertyID::ResourcePath)) == 0) {
-            uiObjProperties.resourcePath = value.get<std::string>();
+        } else if(key.compare(uiPropertyNames.at((int)uiPropertyID::TransitionToScene)) == 0) {
+            uiObjProperties.transitionToScene = value.get<std::string>();
         }
     }
 
@@ -159,6 +159,6 @@ nlohmann::json WriteUIObjPropertiesToJSON(const uiObjectProperties& uiObjPropert
     // actionTrigger
     jsonProperties[uiPropertyNames.at((int)uiPropertyID::ActionTrigger)] = uiObjProperties.actionTrigger;
     // resourcePath
-    jsonProperties[uiPropertyNames.at((int)uiPropertyID::ResourcePath)] = uiObjProperties.resourcePath;
+    jsonProperties[uiPropertyNames.at((int)uiPropertyID::TransitionToScene)] = uiObjProperties.transitionToScene;
     return jsonProperties;
 }

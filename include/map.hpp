@@ -5,6 +5,9 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
+#include <nlohmann/json.hpp>
+#include "id.hpp"
 #include "location.hpp"
 #include "position.hpp"
 
@@ -12,7 +15,13 @@
 #define DGTKPROJECT_MAP_HPP
 
 enum class TerrainType {
-    Empty = 0, Floor, Wall
+    Empty = 0, Floor, Wall, TotalNumTerrainTypes
+};
+
+const std::vector<std::string> TerrainTypeNames = {
+        {"empty"},
+        {"floor"},
+        {"wall"}
 };
 
 namespace sf {
@@ -20,7 +29,22 @@ namespace sf {
     class Texture;
 }
 
-struct Terrain {
+enum class TerrainPropertyID {
+    Name = 0,
+    TerrainType,
+    Walkable,
+    TexturePosition,
+    TotalNumTerrainPropertyIDs
+};
+
+const std::vector<std::string> TerrainPropertyNames = {
+        {"name"},
+        {"type"},
+        {"walkable"},
+        {"texture_position"}
+};
+
+struct TerrainProperties {
     std::string                     name;
     TerrainType                     terrainType;
     bool                            isWalkable;
@@ -28,10 +52,13 @@ struct Terrain {
     sf::Texture*                    texture;
 };
 
+TerrainProperties ReadTerrainPropertiesFromJSON(const nlohmann::json& jsonDoc);
+nlohmann::json WriteTerrainPropertiesToJSON(const TerrainProperties& terrainProperties);
+
 class Creature;
 
 struct Tile {
-    Terrain*                        terrain;
+    TerrainProperties*              terrain;
     bool                            isVisible;
     std::unique_ptr<sf::Sprite>     sprite;
     Creature*                       creature;
@@ -45,20 +72,56 @@ struct TilePlacementStrategy {
 constexpr int MaxMapWidth(100);
 constexpr int MaxMapHeight(100);
 
+enum class MapPropertyID {
+    MapName = 0,
+    Width,
+    Height,
+    TexturePath,
+    TextureWidth,
+    TextureHeight,
+    TerrainProperties,
+    TilePlacementStrategy,
+    DefaultTerrain,
+    NorthEdge,
+    SouthEdge,
+    WestEdge,
+    EastEdge,
+    TotalNumMapPropertyIDs
+};
+
+const std::vector<std::string> MapPropertyNames = {
+        {"name"},
+        {"width"},
+        {"height"},
+        {"texture_path"},
+        {"texture_width"},
+        {"terrain"},
+        {"tile_placement"},
+        {"default_terrain"},
+        {"north_edge"},
+        {"south_edge"},
+        {"west_edge"},
+        {"east_edge"}
+};
+
 struct MapProperties {
+    std::string     name;
     int             width;
     int             height;
     std::string     texturePath;
     int             textureWidth;
     int             textureHeight;
     TilePlacementStrategy   strategy;
+    std::map<TerrainType,TerrainProperties> terrainProperties;
 };
 
 struct Map {
     MapProperties   properties;
     Tile            tileArray[MaxMapWidth][MaxMapHeight];
-    std::map<TerrainType,std::unique_ptr<Terrain*>> terrains;
 };
+
+MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc);
+nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties);
 
 void GenerateMap(Map* map);
 

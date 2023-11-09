@@ -49,6 +49,12 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                         } // for(propertyListIter)
                     } // for(uiObjListIter)
                 } // else if(keyID == uiObjects)
+                else if(keyID == ScenePropertyID::MapView) {
+
+                }  // else if(keyID == MapView)
+                else if(keyID == ScenePropertyID::Map) {
+
+                }  // else if(keyID == Map)
             } // if(findKey)
         } // for(sceneKeyIndex)
 
@@ -61,18 +67,20 @@ nlohmann::json WriteScenePropertiesToJSON(const SceneProperties& sceneProperties
     return sceneJSON;
 }
 
-SceneTransition::SceneTransition(uiActionTrigger triggerType, std::string_view pathToScene, Game* gamePtr):
-    InputListener(gamePtr), trigger(triggerType), scenePath(pathToScene), game(gamePtr) {
+SceneTransition::SceneTransition(uiActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr):
+    InputListener(gamePtr), trigger(triggerType), sceneID(transitionSceneID), game(gamePtr) {
 
 }
 
 void SceneTransition::ReceiveInput(const sf::Event& event) {
     Scene* scene(nullptr);
+    ResourceSystem* resourceSystem(game->GetResourceSystem());
 
     if(trigger == uiActionTrigger::OnKeyPress) {
 
         if (event.type == sf::Event::EventType::KeyPressed) {
-            scene = game->GetResourceSystem()->LoadScene(scenePath, *game);
+            std::string path = resourceSystem->GetScenePath(sceneID);
+            scene = resourceSystem->LoadScene(path, *game);
         } // sf::Event::KeyPressed
 
     } // trigger: OnKeyPress
