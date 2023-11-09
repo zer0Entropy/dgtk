@@ -45,6 +45,8 @@ struct ResourceHandle {
     }
 };
 
+class Scene;
+
 class ResourceSystem: public System {
 public:
     explicit ResourceSystem(const std::filesystem::path& resourceDir);
@@ -68,6 +70,8 @@ public:
 
     const std::filesystem::path& GetResourceDirectory() const;
     std::filesystem::path GetScenePath(UniqueID sceneID) const;
+
+    Scene* LoadScene(std::string_view path, Game& game);
 private:
     std::unique_ptr<sf::Texture> LoadTexture(std::string_view path,
                                              Position startPos = {0, 0},

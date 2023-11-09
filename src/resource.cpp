@@ -6,6 +6,9 @@
 #include <nlohmann/json.hpp>
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
+#include "../include/scene.hpp"
+#include "../include/game.hpp"
+#include "../include/log.hpp"
 
 ResourceSystem::ResourceSystem(const std::filesystem::path& resourceDir):
     System(SystemID::Resource), resourceDirectory(resourceDir) {
@@ -83,7 +86,7 @@ bool ResourceSystem::LoadFrameTextures(UniqueID id, std::string_view path, Posit
     Position currentPos(topLeftPos);
     std::string fullPath(resourceDirectory);
     fullPath.append(path);
-    for(int segmentIndex = (int)FrameSegmentID::TopLeft; segmentIndex < (int)FrameSegmentID::TotalNumFrameSegments; ++segmentIndex) {
+    for(int segmentIndex = (int)FrameSegmentID::TopLeft; segmentIndex < (int)FrameSegmentID::TotalNumFrameSegmentIDs; ++segmentIndex) {
         auto texture = std::make_unique<sf::Texture>();
         success = texture->loadFromFile(fullPath, sf::IntRect(currentPos.x,
                                                                        currentPos.y,
@@ -191,18 +194,45 @@ std::filesystem::path ResourceSystem::GetScenePath(UniqueID id) const {
     return scenePath;
 }
 
+Scene* ResourceSystem::LoadScene(std::string_view path, Game& game) {
+    Scene* scene(nullptr);
+
+    nlohmann::json jsonDoc;
+    std::ifstream jsonFile(std::string{path});
+
+    if(!jsonFile.good()) {
+        // TODO: Report error here!
+        return scene;
+    } else {
+        jsonDoc = nlohmann::json::parse(jsonFile);
+    }
+
+    LogSystem* logSystem = game.GetLogSystem();
+    scene = new Scene;
+    SceneProperties sceneProperties(ReadScenePropertiesFromJSON(jsonDoc, &game));
+    scene->properties = sceneProperties;
+
+    if(jsonFile.is_open()) {
+        jsonFile.close();
+    }
+
+    return scene;
+}
+
 std::unique_ptr<sf::Texture> ResourceSystem::LoadTexture(std::string_view path,
                                                           Position startPos,
                                                           int width,
                                                           int height) {
     auto texture = std::make_unique<sf::Texture>();
     bool success(false);
+    std::string fullPath(resourceDirectory);
+    fullPath.append(path);
 
     if(width == 0 && height == 0) {
-        success = texture->loadFromFile(std::string(path));
+        success = texture->loadFromFile(std::string(fullPath));
     }
     else {
-        success = texture->loadFromFile(std::string(path), sf::IntRect(startPos.x,
+        success = texture->loadFromFile(std::string(fullPath), sf::IntRect(startPos.x,
                                                                        startPos.y,
                                                                        width,
                                                                        height));

@@ -88,7 +88,7 @@ private:
     std::string GetParentheticalExpression(std::string_view expression, int depth = 1);
 
     // Returns -1 if no operators found, or the position of the first operator otherwise:
-    int FindOperator(std::string_view expression);
+    int FindOperator(std::string_view expression, bool excludeParens = true);
 
     OperatorID GetOperatorID(char symbol) const;
 

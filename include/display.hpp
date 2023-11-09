@@ -10,6 +10,7 @@
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include "system.hpp"
+#include "layer.hpp"
 
 #ifndef DGTKPROJECT_DISPLAY_HPP
 #define DGTKPROJECT_DISPLAY_HPP
@@ -50,14 +51,15 @@ public:
     void                        CloseWindow();
     sf::RenderWindow*           GetWindow() const;
 
-    void                        DrawScene(Scene* scene);
+    void                        RenderScene(Scene* scene);
+    void                        DrawScene();
     void                        DrawView(const MapView& view, const Map& map);
 
 private:
     Game*                                       game;
     std::unique_ptr<sf::RenderWindow>           window;
     WindowProperties                            windowProperties;
-    float                                       uiScaleX, uiScaleY;
+    std::vector<sf::Drawable*>                  drawLayers[(int)LayerID::TotalNumLayerIDs];
 };
 
 #endif //DGTKPROJECT_DISPLAY_HPP

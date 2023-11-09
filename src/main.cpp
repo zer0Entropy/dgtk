@@ -13,9 +13,11 @@ int main()
     Game game(std::filesystem::current_path());
     game.Init();
 
+    ResourceSystem* resourceSystem(game.GetResourceSystem());
+
     UniqueID mainMenuID(SceneNames.at(SceneID::MainMenu));
-    std::string scenePath(game.GetResourceSystem()->GetScenePath(mainMenuID));
-    Scene* mainMenu(LoadScene(scenePath, &game));
+    std::string scenePath(resourceSystem->GetScenePath(mainMenuID));
+    Scene* mainMenu(resourceSystem->LoadScene(scenePath, game));
     game.TransitionTo(mainMenu);
 
     auto displaySystem(game.GetDisplaySystem());
@@ -27,4 +29,3 @@ int main()
 
     game.Shutdown();
 }
-

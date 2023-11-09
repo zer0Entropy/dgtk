@@ -63,11 +63,19 @@ int MathParser::EvaluateExpression(Expression& expression) {
             expression.containsParenthesis = false;
         } else {
             expression.containsParenthesis = true;
-            std::string_view deepestParenthetical = GetParentheticalExpression(workingCopy, expression.parenthesisDepth);
+            std::string deepestParenthetical = GetParentheticalExpression(workingCopy, expression.parenthesisDepth);
             std::size_t parentheticalPosition = workingCopy.find(deepestParenthetical);
             SimpleExpression simpleExpression = GenerateSimpleExpression(deepestParenthetical);
+            std::string simpleParenthetical = simpleExpression.text;
+            simpleExpression.text = workingCopy.substr(0, parentheticalPosition);
+            simpleExpression.text.append(simpleParenthetical);
+            for(int parenthIndex = 0; parenthIndex < expression.parenthesisDepth; ++parenthIndex) {
+                simpleExpression.text.append(")");
+            }
+            simpleExpression.text.append(workingCopy.substr(parentheticalPosition + deepestParenthetical.length() + 1,
+                                                            workingCopy.length() - parentheticalPosition + deepestParenthetical.length()));
             if(simpleExpression.success) {
-                while(FindOperator(simpleExpression.text) > 0) {
+                while(FindOperator(simpleExpression.text, true) >= 0) {
                     simpleExpression.text = SimplifyExpression(simpleExpression.text);
                 }
                 if(simpleExpression.success) {
@@ -85,16 +93,16 @@ int MathParser::EvaluateExpression(Expression& expression) {
     } while(expression.containsParenthesis);
 
     expression.simplifiedText = workingCopy;
-    if(FindOperator(workingCopy) < 0) {
+    if(FindOperator(workingCopy, true) < 0) {
         expression.result = std::atoi(workingCopy.c_str());
     }
 
     // Now we just locate remaining operators and solve them in order of precedence:
     if(expression.success) {
-        while(FindOperator(workingCopy) > 0) {
+        while(FindOperator(workingCopy, true) >= 0) {
             workingCopy = SimplifyExpression(workingCopy);
             expression.simplifiedText = workingCopy;
-            if(FindOperator(workingCopy) < 0) {
+            if(FindOperator(workingCopy, true) < 0) {
                 expression.result = std::atoi(expression.simplifiedText.c_str());
             }
         } // while operator found
@@ -110,7 +118,7 @@ int MathParser::EvaluateSimpleExpression(SimpleExpression& expression) {
                 expression.success = false;
                 expression.error.id = OperationErrorID::DivisionByZero;
                 expression.error.name = OperationErrorNames[(int)expression.error.id];
-                expression.error.description = GenerateErrorDescription(expression.error.id, FindOperator(expression.text), expression.text);
+                expression.error.description = GenerateErrorDescription(expression.error.id, FindOperator(expression.text, true), expression.text);
             } else {
                 expression.result = expression.operand1 / expression.operand2;
                 expression.success = true;
@@ -170,12 +178,12 @@ std::string MathParser::GenerateErrorDescription(OperationErrorID errorID, std::
 }
 
 std::string MathParser::SimplifyExpression(std::string_view expression) {
-    if(FindOperator(expression) < 0) {
+    if(FindOperator(expression, true) < 0) {
         return std::string{expression};
     }
     SimpleExpression simplified;
     simplified.text = expression;
-    std::size_t operatorPosition(FindOperator(expression));
+    std::size_t operatorPosition(FindOperator(expression, true));
     for(int operatorIndex = (int)OperatorID::Division; operatorIndex <= (int)OperatorID::Subtraction; ++operatorIndex) {
         char c(expression[operatorPosition]);
         if(c == OperatorSymbols[operatorIndex]) {
@@ -186,7 +194,8 @@ std::string MathParser::SimplifyExpression(std::string_view expression) {
 
     std::string op1String(GetPrecedingTerm(expression, operatorPosition));
     std::string op2String(GetNextTerm(expression, operatorPosition));
-    std::size_t op1Position( expression.find(op1String) );
+    std::string firstHalfExpression{ expression.substr(0, operatorPosition) };
+    std::size_t op1Position( firstHalfExpression.rfind(op1String) );
     std::size_t op2Position( expression.find(op2String, operatorPosition + 1) );
     simplified.operand1 = std::atoi(op1String.c_str());
     simplified.operand2 = std::atoi(op2String.c_str());
@@ -198,7 +207,7 @@ std::string MathParser::SimplifyExpression(std::string_view expression) {
                 simplified.success = false;
                 simplified.error.id = OperationErrorID::DivisionByZero;
                 simplified.error.name = OperationErrorNames[(int)simplified.error.id];
-                simplified.error.description = GenerateErrorDescription(simplified.error.id, FindOperator(simplified.text), simplified.text);
+                simplified.error.description = GenerateErrorDescription(simplified.error.id, FindOperator(simplified.text, true), simplified.text);
             } else {
                 simplified.result = simplified.operand1 / simplified.operand2;
                 simplified.success = true;
@@ -223,10 +232,23 @@ std::string MathParser::SimplifyExpression(std::string_view expression) {
             break;
     }
 
-    simplified.text = expression.substr(0, op1Position);
-    simplified.text.append(std::to_string(simplified.result));
-    if(expression.length() > op2Position + op2String.length()) {
-        simplified.text.append(expression.substr(op2String.length() + 1, expression.length() - op2String.length() - 1));
+    std::string preamble("");
+    if(op1Position > 0) {
+        preamble = expression.substr(0, op1Position);
+    }
+    simplified.text = preamble;
+    std::string resultString = std::to_string(simplified.result);
+    simplified.text.append(resultString);
+    int lengthReduction = (op1String.length() + op2String.length() + 1) - resultString.length();
+    int remainingCharacters = expression.length() - preamble.length() - resultString.length() - lengthReduction;
+    bool operatorsRemaining(false);
+    if(FindOperator(simplified.text, false) >= 0) {
+        operatorsRemaining = true;
+    }
+    if(remainingCharacters > 0 && operatorsRemaining) {
+        std::size_t remainderPos = op2Position + op2String.length();
+        std::string remainder = std::string{expression.substr(remainderPos, remainingCharacters)};
+        simplified.text.append(remainder);
     }
     return simplified.text;
 }
@@ -234,13 +256,12 @@ std::string MathParser::SimplifyExpression(std::string_view expression) {
 SimpleExpression MathParser::GenerateSimpleExpression(std::string_view expression) {
     SimpleExpression simpleExpression;
 
-    int operatorPosition(FindOperator(expression));
-    if(operatorPosition > 0) {
+    int operatorPosition(FindOperator(expression,true));
+    if(operatorPosition >= 0) {
         const char operatorSymbol(expression.at(operatorPosition));
         simpleExpression.operatorID = GetOperatorID(operatorSymbol);
-        std::string operand1String(expression.substr(0, operatorPosition - 1));
-        std::string operand2String(
-                expression.substr(operatorPosition + 1, expression.length() - operatorPosition - 2));
+        std::string operand1String(GetPrecedingTerm(expression, operatorPosition));
+        std::string operand2String(GetNextTerm(expression, operatorPosition));
         simpleExpression.operand1 = std::atoi(operand1String.c_str());
         simpleExpression.operand2 = std::atoi(operand2String.c_str());
         simpleExpression.text = expression;
@@ -355,14 +376,25 @@ std::string MathParser::GetParentheticalExpression(std::string_view expression, 
     return parenthetical;
 }
 
-int MathParser::FindOperator(std::string_view expression) {
+int MathParser::FindOperator(std::string_view expression, bool excludeParens) {
     int operatorPosition(-1);
+    char OperatorSubset[(int)OperatorID::TotalNumOperatorIDs - 2];
+    for(int index = 0; index < (int)OperatorID::TotalNumOperatorIDs - 2; ++index) {
+        OperatorSubset[index] = OperatorSymbols[index+2];
+    }
     OperatorID operatorFound;
 
     for(int index = 0; index < expression.length(); ++index) {
         char c(expression[index]);
         for(int operatorIndex = 0; operatorIndex < (int)OperatorID::TotalNumOperatorIDs; ++operatorIndex) {
-            if(c == OperatorSymbols[operatorIndex]) {
+            if(excludeParens) {
+                if(c == OperatorSubset[operatorIndex]) {
+                    if(operatorPosition == -1 || (int)operatorFound > operatorIndex){
+                        operatorPosition = index;
+                        operatorFound = (OperatorID)(operatorIndex + 2);
+                    }
+                }
+            } else if(c == OperatorSymbols[operatorIndex]) {
                 if(operatorPosition == -1 || (int)operatorFound > operatorIndex){
                     operatorPosition = index;
                     operatorFound = (OperatorID)operatorIndex;
@@ -385,37 +417,100 @@ OperatorID MathParser::GetOperatorID(char symbol) const {
 }
 
 std::string MathParser::GetPrecedingTerm(std::string_view expression, std::size_t position) {
+    std::size_t beginPosition(position);
+    int length(0);
+    bool done(false);
+    bool operatorFound(false);
+    bool isTerm(false);
+    for(int index = position - 1; !done && index >= 0; --index) {
+
+        char c(expression[index]);
+        for(int opIndex = 0; !operatorFound && opIndex < (int)OperatorID::TotalNumOperatorIDs; ++opIndex) {
+            if(c == OperatorSymbols[opIndex]) {
+                operatorFound = true;
+            }
+        }
+        if(!operatorFound && c != ' ') {
+            isTerm = true;
+        } else {
+            isTerm = false;
+        }
+        if(isTerm) {
+            ++length;
+        } else {
+            if(length > 0) {
+                done = true;
+            } else {
+                operatorFound = false;
+                beginPosition = index;
+            }
+        }
+
+    }
+    std::string precedingTerm = std::string{expression.substr(beginPosition - length, length)};
+    return precedingTerm;
+}
+
+/*
+std::string MathParser::GetPrecedingTerm(std::string_view expression, std::size_t position) {
     std::size_t beginPosition(position - 1), endPosition(0);
     bool termFound(false);
+    bool operatorFound(false);
     // Find first whitespace before position
     for(int index = position - 1; endPosition == 0 && index >= 0; --index) {
         char c(expression[index]);
+        for(int opIndex = 0; !operatorFound && opIndex < (int)OperatorID::TotalNumOperatorIDs; ++opIndex) {
+            if(c == OperatorSymbols[opIndex]) {
+                    operatorFound = true;
+            }
+        }
         if(c == ' ') {
             if(!termFound) {
                 beginPosition = index;
+                operatorFound =  false;
             } else {
                 endPosition = index;
+            }
+        } else if(operatorFound) {
+            if(termFound) {
+                endPosition  = index;
+            } else {
+                operatorFound = false;
             }
         } else {
             termFound = true;
         }
     }
     if(endPosition <= beginPosition) {
-        beginPosition = endPosition;
-        endPosition = position;
+        if(endPosition == 0) {
+            beginPosition = endPosition;
+            endPosition = position;
+        } else {
+            std::size_t tmpPosition = endPosition;
+            beginPosition = endPosition;
+            endPosition = tmpPosition;
+        }
     }
     std::string precedingTerm = std::string{expression.substr(beginPosition, endPosition - beginPosition)};
     return precedingTerm;
 }
-
+*/
 std::string MathParser::GetNextTerm(std::string_view expression, std::size_t position) {
     std::string nextTerm("");
     bool done(false);
+    bool operatorFound(false);
     for(int index = position + 1; !done && index < expression.length(); ++index) {
         char c(expression[index]);
-        if(c == ' ') {
+        for(int opIndex = 0; !operatorFound && opIndex < (int)OperatorID::TotalNumOperatorIDs; ++opIndex) {
+            if(c == OperatorSymbols[opIndex]) {
+                operatorFound = true;
+            }
+        }
+        if(c == ' ' || operatorFound) {
             if(nextTerm.length() > 0) {
                 done = true;
+            } else {
+                operatorFound = false;
             }
         } else {
             nextTerm += c;

@@ -44,7 +44,7 @@ void PlayerController::ReceiveInput(const sf::Event& event) {
             bool success = game->MoveCreature(player->character.get(), location);
             if(success) {
                 Scene* scene(game->GetCurrentScene());
-                CenterViewOnPlayer(scene->view, *scene->map.get(), location);
+                CenterViewOnPlayer(*scene->mapView, *scene->map.get(), location);
             }
         }
     }

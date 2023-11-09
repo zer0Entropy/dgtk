@@ -49,6 +49,8 @@ void Game::Init() {
     for(int systemIndex = 0; systemIndex < (int)SystemID::TotalNumSystems; ++systemIndex) {
         systems[systemIndex]->Init();
     }
+    mathParser.RegisterVariable("window_width", displayConfig.windowProperties.width);
+    mathParser.RegisterVariable("window_height", displayConfig.windowProperties.height - displayConfig.windowHeightModifier);
 }
 
 void Game::Update() {
@@ -87,6 +89,10 @@ const DisplayConfig& Game::GetDisplayConfig() const {
     return displayConfig;
 }
 
+MathParser& Game::GetMathParser() const {
+    return (MathParser&)mathParser;
+}
+
 Scene* Game::GetCurrentScene() const {
     return currentScene.get();
 }
@@ -101,6 +107,7 @@ void Game::ApplyTileScaling(sf::Transformable* transform) {
 
 void Game::TransitionTo(Scene* scene) {
     InputSystem* inputSystem(GetInputSystem());
+    ResourceSystem* resourceSystem(GetResourceSystem());
 
     if(currentScene) {
         SignalInterrupt();
@@ -118,11 +125,22 @@ void Game::TransitionTo(Scene* scene) {
         currentScene.reset(std::move(scene));
     }
 
+    for(auto decorationIter = scene->properties.decorationProperties.begin();
+            decorationIter != scene->properties.decorationProperties.end(); ++decorationIter) {
+        DecorationProperties    decProperties = *decorationIter;
+        uiObjectProperties uiProperties = FindUIObjProperties(scene, decorationIter->id);
+        Decoration* decoration = CreateDecoration(uiProperties, decProperties);
+
+        decoration->decProperties = decProperties;
+        decoration->uiProperties = uiProperties;
+        scene->uiObjects.push_back(decoration);
+    }
+
     for(auto iterator = currentScene->keyListeners.begin(); iterator != currentScene->keyListeners.end(); ++iterator) {
         inputSystem->AddListener(iterator->second, ListenerType::KeyPressListener);
     } // for each inputListener in Scene
 }
-
+/*
 Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int height) {
     Map* map(nullptr);
     if(width <= MaxMapWidth && height <= MaxMapHeight) {
@@ -164,7 +182,7 @@ Map* Game::GenerateMap(std::filesystem::path textureSource, int width, int heigh
     }
     return map;
 }
-
+*/
 bool Game::MoveCreature(Creature* creature, MapLocation location) {
     bool success(false);
     MapLocation oldLocation(creature->location);
@@ -175,7 +193,7 @@ bool Game::MoveCreature(Creature* creature, MapLocation location) {
     if(location.x >= 0 && location.x < mapWidth
         && location.y >= 0 && location.y < mapHeight) {
         Tile& newTile(map.tileArray[location.y][location.x]);
-        if(newTile.isWalkable && !newTile.creature) {
+        if(newTile.terrain && newTile.terrain->isWalkable && !newTile.creature) {
             oldTile.creature = nullptr;
             newTile.creature = creature;
             creature->location = location;
@@ -183,6 +201,28 @@ bool Game::MoveCreature(Creature* creature, MapLocation location) {
         }
     } // check if location is valid
     return success;
+}
+
+uiObjectProperties Game::FindUIObjProperties(Scene *scene, UniqueID id) const {
+    uiObjectProperties uiObjProperties;
+    for(auto uiObjIter = scene->properties.uiObjProperties.begin(); uiObjIter != scene->properties.uiObjProperties.end(); ++uiObjIter) {
+        if(uiObjIter->id == id) {
+            uiObjProperties = *uiObjIter;
+            break;
+        }
+    }
+    return uiObjProperties;
+}
+
+DecorationProperties Game::FindDecorationProperties(Scene *scene, UniqueID id) const {
+    DecorationProperties decProperties;
+    for(auto decIter = scene->properties.decorationProperties.begin(); decIter != scene->properties.decorationProperties.end(); ++decIter) {
+        if(decIter->id == id) {
+            decProperties = *decIter;
+            break;
+        }
+    }
+    return decProperties;
 }
 
 bool Game::FindGameConfig() {
@@ -286,21 +326,257 @@ bool Game::LoadGameConfig() {
     return success;
 }
 
-Decoration* Game::CreateDecoration(UniqueID id, DecorationType decType) {
-    Decoration* decoration = nullptr;
-    bool validType(false);
-    switch(decType) {
-        case DecorationType::Background:    validType = true;
+Decoration* Game::CreateFrameSegment(Decoration* frame, FrameSegmentID segmentID) {
+    Decoration* frameSegment(nullptr);
+
+    Position position(frame->uiProperties.position);
+    Position origin(frame->uiProperties.origin);
+    UniqueID frameSegmentID(frame->id);
+    frameSegmentID.append(FrameSegmentNames.at((int)segmentID));
+
+    const TextureSource& source(frame->uiProperties.textureSource);
+    const Position textureOrigin(source.topLeft);
+    Position texturePosition(source.topLeft);
+    sf::Sprite* sprite(nullptr);
+
+    sf::Vector2u windowSize{ (unsigned int)displayConfig.windowProperties.width,
+                             (unsigned int)displayConfig.windowProperties.height - displayConfig.windowHeightModifier };
+    sf::Vector2u textureSize{ (unsigned int)(source.width * displayConfig.uiScaleX),
+                              (unsigned int)(source.height * displayConfig.uiScaleY) };
+
+    switch(segmentID) {
+        case FrameSegmentID::TopLeft:
+            position = origin;
+            texturePosition = textureOrigin;
             break;
-        case DecorationType::Doodad:        validType = true;
+        case FrameSegmentID::TopMid:
+            position = { origin.x + (int)textureSize.x, origin.y };
+            texturePosition = { textureOrigin.x + source.width, textureOrigin.y };
             break;
-        case DecorationType::Frame:         validType = true;
+        case FrameSegmentID::TopRight:
+            position = { (int)windowSize.x - (int)textureSize.x, origin.y };
+            texturePosition = {textureOrigin.x + (2 * source.width), textureOrigin.y };
             break;
-        case DecorationType::Text:          validType = true;
+        case FrameSegmentID::MidLeft:
+            position = { origin.x, origin.y + (int)textureSize.y };
+            texturePosition = { textureOrigin.x, textureOrigin.y + source.height };
+            break;
+        case FrameSegmentID::Middle:
+            position = { origin.x + (int)textureSize.x, origin.y + (int)textureSize.y };
+            texturePosition = { textureOrigin.x + source.width, textureOrigin.y + source.height };
+            break;
+        case FrameSegmentID::MidRight:
+            position = { (int)windowSize.x - (int)textureSize.x, origin.y + (int)textureSize.y };
+            texturePosition = { textureOrigin.x + (2 * source.width), textureOrigin.y + source.height };
+            break;
+        case FrameSegmentID::BottomLeft:
+            position = { origin.x, (int)windowSize.y - (int)textureSize.y };
+            texturePosition = { textureOrigin.x, textureOrigin.y + (2 * source.height) };
+            break;
+        case FrameSegmentID::BottomMid:
+            position = { origin.x + (int)textureSize.x, (int)windowSize.y - (int)textureSize.y };
+            texturePosition = { textureOrigin.x + source.width, textureOrigin.y + (2 * source.height) };
+            break;
+        case FrameSegmentID::BottomRight:
+            position = { (int)windowSize.x - (int)textureSize.x, (int)windowSize.y - (int)textureSize.y };
+            texturePosition = { textureOrigin.x + (2 * source.width), textureOrigin.y + (2 * source.height) };
+            break;
+        case FrameSegmentID::TotalNumFrameSegmentIDs:   default:
             break;
     }
-    if(validType) {
-        decoration = new Decoration(id, decType);
+
+    ResourceSystem* resourceSystem = GetResourceSystem();
+    sf::Texture* texture = resourceSystem->GetTexture(frameSegmentID);
+    if(!texture) {
+        resourceSystem->LoadTexture(frameSegmentID, source.pathToFile, texturePosition, source.width, source.height);
+        texture = resourceSystem->GetTexture(frameSegmentID);
+    }
+
+    frameSegment = new Decoration(frameSegmentID, DecorationType::Frame);
+    frameSegment->uiProperties = frame->uiProperties;
+    frameSegment->decProperties = frame->decProperties;
+    frameSegment->uiProperties.id = frameSegment->decProperties.id = frameSegmentID;
+    frameSegment->texture = texture;
+    frameSegment->uiProperties.position = position;
+
+    sprite = new sf::Sprite;
+    sprite->setTexture(*texture);
+    ApplyUIScaling(sprite);
+    sprite->setPosition(position.x, position.y);
+    frameSegment->sprite.reset(std::move(sprite));
+
+    return frameSegment;
+}
+
+Decoration* Game::CreateDecoration(const uiObjectProperties& uiObjProperties, const DecorationProperties& decProperties) {
+    Decoration* decoration(nullptr);
+    ResourceSystem* resourceSystem(GetResourceSystem());
+    bool success(true);
+
+    sf::Vector2u windowSize{ (unsigned int)displayConfig.windowProperties.width,
+                             (unsigned int)displayConfig.windowProperties.height - displayConfig.windowHeightModifier };
+    sf::Vector2u textureSize{ (unsigned int)(uiObjProperties.textureSource.width * displayConfig.uiScaleX),
+                              (unsigned int)(uiObjProperties.textureSource.height * displayConfig.uiScaleY) };
+
+    switch(decProperties.decType) {
+        case DecorationType::Background:
+            break;
+        case DecorationType::Doodad:
+            break;
+        case DecorationType::Frame:
+            break;
+        case DecorationType::Text:
+            break;
+        default:
+            success = false;
+    }
+
+    if(success) {
+        decoration = new Decoration(decProperties.id, decProperties.decType);
+        decoration->font = nullptr;
+        decoration->texture = nullptr;
+        decoration->sprite = nullptr;
+        decoration->text = nullptr;
+        decoration->uiProperties = uiObjProperties;
+        decoration->decProperties = decProperties;
+        switch(decProperties.decType) {
+            case DecorationType::Background:
+                decoration->sprite = std::unique_ptr<sf::Sprite>(new sf::Sprite);
+                break;
+            case DecorationType::Doodad:
+                decoration->sprite = std::unique_ptr<sf::Sprite>(new sf::Sprite);
+                break;
+            case DecorationType::Frame: {
+                int segmentCount(0), rowCount(0), columnCount(0);
+                Position position(decoration->uiProperties.position);
+                for(int segmentIndex = 0; segmentIndex < (int)FrameSegmentID::TotalNumFrameSegmentIDs; ++segmentIndex) {
+                    std::string segmentID(decoration->decProperties.id);
+                    int stepX(0), stepY(0);
+                    segmentID.append(FrameSegmentNames.at(segmentIndex));
+                    if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopLeft) {
+                        position = uiObjProperties.position;
+                        segmentCount = 1;
+                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::TopRight) {
+                        position = {
+                                (int)(windowSize.x - textureSize.x),
+                                uiObjProperties.position.y
+                        };
+                        segmentCount = 1;
+                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomLeft) {
+                        position = {
+                                uiObjProperties.position.x,
+                                (int)(windowSize.y - textureSize.y)
+                        };
+                        segmentCount = 1;
+                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomRight) {
+                        position = {
+                                (int)(windowSize.x - textureSize.x),
+                                (int)(windowSize.y - textureSize.y)
+                        };
+                        segmentCount = 1;
+                    } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopMid) {
+                        position = {
+                                (int) (uiObjProperties.position.x + textureSize.x),
+                                uiObjProperties.position.y
+                        };
+                        segmentCount = ((int) windowSize.x / (int) textureSize.x) - 2;
+                        stepX = 1;
+                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomMid) {
+                        position = {
+                                (int)(uiObjProperties.position.x + textureSize.x),
+                                (int)(windowSize.y - textureSize.y)
+                        };
+                        segmentCount = ((int) windowSize.x / (int) textureSize.x) - 2;
+                        stepX = 1;
+                    } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::MidLeft) {
+                        position = {
+                                uiObjProperties.position.x,
+                                (int) (uiObjProperties.position.y + textureSize.y)
+                        };
+                        segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
+                        stepY = 1;
+                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::MidRight) {
+                        position = {
+                                (int)(windowSize.x - textureSize.x),
+                                (int)(uiObjProperties.position.y + textureSize.y)
+                        };
+                        segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
+                        stepY = 1;
+                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::Middle) {
+                        position = {
+                                (int)(decoration->uiProperties.position.x + textureSize.x),
+                                (int)(decoration->uiProperties.position.y + textureSize.y)
+                        };
+                        rowCount = (((int)windowSize.y) / (int)textureSize.y) - 2;
+                        columnCount = ((int)windowSize.x / (int)textureSize.x) - 2;
+                        segmentCount = rowCount * columnCount;
+                        stepX = 1;
+                        stepY = 1;
+                    }
+                    for (int s = 0; s < segmentCount; ++s) {
+                        Decoration* segment = CreateFrameSegment(decoration, (FrameSegmentID) segmentIndex);
+                        segment->sprite->setPosition(position.x, position.y);
+                        position.x += (stepX * textureSize.x);
+                        if((FrameSegmentID)segmentIndex == FrameSegmentID::Middle) {
+                            if(position.x > columnCount * textureSize.x) {
+                                position.x = (int)(decoration->uiProperties.position.x + textureSize.x);
+                                position.y += (stepY * textureSize.y);
+                            }
+                        } else {
+                            position.y += (stepY * textureSize.y);
+                        }
+                        decoration->children.push_back(std::unique_ptr<uiObject>(std::move(segment)));
+                    }
+                }
+                break; }
+            case DecorationType::Text:
+                decoration->text = std::unique_ptr<sf::Text>(new sf::Text);
+                if(!decoration->font) {
+                    resourceSystem->LoadResource(  decProperties.fontID,
+                                                   ResourceType::Font,
+                                                   decProperties.fontPath  );
+                    decoration->font = resourceSystem->GetFont(decProperties.fontID);
+                }
+                decoration->text->setFont(*decoration->font);
+                decoration->text->setCharacterSize(decProperties.fontSize);
+                decoration->text->setFillColor(decProperties.fontColor);
+                decoration->text->setOutlineColor(decProperties.outlineColor);
+                decoration->text->setOutlineThickness(decProperties.outlineThickness);
+                decoration->text->setString(decProperties.contents);
+                decoration->text->setPosition(decoration->uiProperties.position.x, decoration->uiProperties.position.y);
+                if(uiObjProperties.align == Alignment::Center) {
+                    decoration->text->setPosition(
+                            decoration->uiProperties.position.x - (decoration->text->getLocalBounds().width / 2),
+                            decoration->uiProperties.position.y
+                            );
+                } else if(uiObjProperties.align == Alignment::Right) {
+                    Position position = decoration->uiProperties.position;
+                    position.x += decoration->text->getLocalBounds().width;
+                    if(position.x + decoration->text->getLocalBounds().width > windowSize.x) {
+                        position.x = windowSize.x - decoration->text->getLocalBounds().width;
+                    }
+                    decoration->text->setPosition(decoration->uiProperties.position.x, decoration->uiProperties.position.y);
+                }
+                break;
+            default:    break;
+        }
+    }
+
+    if(decoration->sprite) {
+        if(!decoration->texture) {
+            resourceSystem->LoadTexture(    decoration->decProperties.id,
+                                            decoration->uiProperties.textureSource.pathToFile,
+                                            decoration->uiProperties.textureSource.topLeft,
+                                            decoration->uiProperties.textureSource.width,
+                                            decoration->uiProperties.textureSource.height   );
+            decoration->texture = resourceSystem->GetTexture(decoration->decProperties.id);
+            if(decoration->texture) {
+                decoration->sprite->setTexture(*decoration->texture);
+            } else {
+                sf::Sprite* sprite = decoration->sprite.release();
+                delete sprite;
+            }
+        }
     }
 
     return decoration;

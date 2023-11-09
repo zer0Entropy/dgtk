@@ -9,7 +9,7 @@
 
 DisplaySystem::DisplaySystem(const DisplayConfig& config, Game* gamePtr):
     System(SystemID::Display), game(gamePtr),
-    uiScaleX(config.uiScaleX), uiScaleY(config.uiScaleY), windowProperties(config.windowProperties) {
+    windowProperties(config.windowProperties) {
 
 }
 
@@ -25,9 +25,10 @@ void DisplaySystem::Update() {
     if(window) {
         window->clear();
         Scene* currentScene = game->GetCurrentScene();
-        DrawScene(currentScene);
+        RenderScene(currentScene);
+        DrawScene();
         if(currentScene->map) {
-            DrawView(currentScene->view, *currentScene->map.get());
+            DrawView(*currentScene->mapView, *currentScene->map.get());
         }
         window->display();
     }
@@ -64,13 +65,39 @@ sf::RenderWindow* DisplaySystem::GetWindow() const {
     return window.get();
 }
 
-void DisplaySystem::DrawScene(Scene* scene) {
-    for (int layerIndex = 0; layerIndex < (int) uiLayerID::TotalNumUILayers; ++layerIndex) {
-        auto& drawLayer(scene->drawLayers[layerIndex]);
-        for(auto iterator = drawLayer.begin(); iterator != drawLayer.end(); ++iterator) {
-            window->draw(**iterator);
-        }
-    }
+void DisplaySystem::RenderScene(Scene* scene) {
+    for(int index = 0; index < (int)LayerID::TotalNumLayerIDs; ++index) {
+        std::vector<sf::Drawable*>& currentLayer = drawLayers[index];
+        for(auto uiObjPtr: scene->uiObjects) {
+            if(uiObjPtr->uiProperties.layer == (LayerID)index) {
+                if(uiObjPtr->sprite) {
+                    currentLayer.push_back(uiObjPtr->sprite.get());
+                }
+                if(uiObjPtr->text) {
+                    currentLayer.push_back(uiObjPtr->text.get());
+                }
+                if(!uiObjPtr->children.empty()) {
+                    for(auto& childPtr : uiObjPtr->children) {
+                        if(childPtr->sprite) {
+                            currentLayer.push_back(childPtr->sprite.get());
+                        }
+                        if(childPtr->text) {
+                            currentLayer.push_back(childPtr->text.get());
+                        }
+                    }
+                }
+            } // if(layer == currentLayer)
+        } // for each uiObject
+    } // for each layer
+}
+
+void DisplaySystem::DrawScene() {
+    for(int index = 0; index < (int)LayerID::TotalNumLayerIDs; ++index) {
+        std::vector<sf::Drawable*>& currentLayer = drawLayers[index];
+        for(auto drawable : currentLayer) {
+            window->draw(*drawable);
+        } // for each drawable in currentLayer
+    } // for each layer
 }
 
 void DisplaySystem::DrawView(const MapView& view, const Map& map) {

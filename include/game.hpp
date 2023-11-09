@@ -43,6 +43,8 @@ public:
 
     const DisplayConfig& GetDisplayConfig() const;
 
+    MathParser&         GetMathParser() const;
+
     Scene*              GetCurrentScene() const;
 
     void                ApplyUIScaling(sf::Transformable* transform);
@@ -50,15 +52,19 @@ public:
 
     void                TransitionTo(Scene* scene);
 
-    Map*                GenerateMap(std::filesystem::path textureSource, int width, int height);
+    //Map*                GenerateMap(std::filesystem::path textureSource, int width, int height);
 
     bool                MoveCreature(Creature* creature, MapLocation location);
 
-    Decoration*         CreateDecoration(UniqueID id, DecorationType decType);
+    Decoration*         CreateFrameSegment(Decoration* frame, FrameSegmentID segmentID);
+    Decoration*         CreateDecoration(const uiObjectProperties& uiObjProperties, const DecorationProperties& decProperties);
 
     void                SignalInterrupt();
 
 private:
+    uiObjectProperties FindUIObjProperties(Scene *scene, UniqueID id) const;
+    DecorationProperties FindDecorationProperties(Scene *scene, UniqueID id) const;
+
     bool                FindGameConfig();
 
     bool                LoadGameConfig();
@@ -80,6 +86,8 @@ private:
     std::filesystem::path       configFilePath;
 
     DisplayConfig               displayConfig;
+
+    MathParser                  mathParser;
 
     static const std::string    configFilename;
 };

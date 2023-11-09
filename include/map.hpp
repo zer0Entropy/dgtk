@@ -2,6 +2,7 @@
 // Created by zeroc00l on 10/31/23.
 //
 
+#include <map>
 #include <memory>
 #include <string>
 #include "location.hpp"
@@ -16,16 +17,29 @@ enum class TerrainType {
 
 namespace sf {
     class Sprite;
+    class Texture;
 }
+
+struct Terrain {
+    std::string                     name;
+    TerrainType                     terrainType;
+    bool                            isWalkable;
+    Position                        texturePosition;
+    sf::Texture*                    texture;
+};
 
 class Creature;
 
 struct Tile {
-    TerrainType                     terrainType;
-    bool                            isWalkable;
+    Terrain*                        terrain;
     bool                            isVisible;
     std::unique_ptr<sf::Sprite>     sprite;
     Creature*                       creature;
+};
+
+struct TilePlacementStrategy {
+    TerrainType     defaultTerrainType;
+    TerrainType     edges[(int)Direction::TotalNumCardinalDirections];
 };
 
 constexpr int MaxMapWidth(100);
@@ -37,13 +51,15 @@ struct MapProperties {
     std::string     texturePath;
     int             textureWidth;
     int             textureHeight;
-    Position        wallTexturePos;
-    Position        floorTexturePos;
+    TilePlacementStrategy   strategy;
 };
 
 struct Map {
     MapProperties   properties;
     Tile            tileArray[MaxMapWidth][MaxMapHeight];
+    std::map<TerrainType,std::unique_ptr<Terrain*>> terrains;
 };
+
+void GenerateMap(Map* map);
 
 #endif //DGTKPROJECT_MAP_HPP

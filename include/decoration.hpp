@@ -8,6 +8,31 @@
 #ifndef DGTKPROJECT_DECORATION_HPP
 #define DGTKPROJECT_DECORATION_HPP
 
+enum class DecorationPropertyID {
+    ObjectID = 0,
+    DecorationType,
+    FontID,
+    FontPath,
+    FontSize,
+    FontColor,
+    OutlineColor,
+    OutlineThickness,
+    TextContents,
+    TotalNumDecorationPropertyIDs
+};
+
+const std::vector<std::string> DecorationPropertyNames{
+        {"object_id"},
+        {"decoration_type"},
+        {"font_id"},
+        {"font_path"},
+        {"font_size"},
+        {"font_color"},
+        {"outline_color"},
+        {"outline_thickness"},
+        {"contents"}
+};
+
 enum class DecorationType {
     Background,
     Frame,
@@ -16,6 +41,7 @@ enum class DecorationType {
 };
 
 struct DecorationProperties {
+    UniqueID            id;
     DecorationType      decType;
     UniqueID            fontID;
     std::string         fontPath;
@@ -41,7 +67,7 @@ enum class FrameSegmentID {
     TopLeft = 0, TopMid, TopRight,
     MidLeft, Middle, MidRight,
     BottomLeft, BottomMid, BottomRight,
-    TotalNumFrameSegments
+    TotalNumFrameSegmentIDs
 };
 
 static std::vector<std::string> FrameSegmentNames{
@@ -49,5 +75,10 @@ static std::vector<std::string> FrameSegmentNames{
     "MidLeft", "Middle", "MidRight",
     "BottomLeft", "BottomMiddle", "BottomRight"
 };
+
+class LogSystem;
+
+DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& jsonDoc);
+nlohmann::json WriteDecorationPropertiesToJSON(const DecorationProperties& decProperties);
 
 #endif //DGTKPROJECT_DECORATION_HPP

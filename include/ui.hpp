@@ -5,15 +5,52 @@
 #include <vector>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
+#include <nlohmann/json.hpp>
 #include "resource.hpp"
+#include "math.hpp"
+#include "layer.hpp"
 
 #ifndef DGTKPROJECT_UI_HPP
 #define DGTKPROJECT_UI_HPP
 
+enum class uiPropertyID {
+        ObjectID = 0,
+        ObjectType,
+        Alignment,
+        Origin,
+        Position,
+        LayerID,
+        TexturePath,
+        TexturePosition,
+        TextureWidth,
+        TextureHeight,
+        ActionType,
+        ActionTrigger,
+        ResourcePath,
+        TotalNumUIPropertyIDs
+};
+
+const std::vector<std::string> uiPropertyNames{
+        {"object_id"},
+        {"object_type"},
+        {"alignment"},
+        {"origin"},
+        {"position"},
+        {"layer_id"},
+        {"texture_path"},
+        {"texture_position"},
+        {"texture_width"},
+        {"texture_height"},
+        {"action_type"},
+        {"action_trigger"},
+        {"resource_path"}
+};
+
 enum class uiObjectType {
     Decoration,
     Toolbar,
-    Scrollbar
+    Scrollbar,
+    MapView
 };
 
 enum class uiActionType {
@@ -24,14 +61,6 @@ enum class uiActionType {
 enum class uiActionTrigger {
     None,
     OnKeyPress
-};
-
-enum class uiLayerID {
-    Background = 0,
-    WindowFrame,
-    Sprite,
-    Text,
-    TotalNumUILayers
 };
 
 class uiObject;
@@ -45,12 +74,16 @@ struct uiAction {
 };
 
 struct uiObjectProperties {
+    UniqueID        id;
     uiObjectType    uiType;
     TextureSource   textureSource;
     Alignment       align;
     Position        origin;
     Position        position;
-    uiLayerID       layer;
+    LayerID       layer;
+    uiActionType    actionType;
+    uiActionTrigger actionTrigger;
+    std::string     resourcePath;
 };
 
 struct uiObject {
@@ -66,5 +99,8 @@ struct uiObject {
         uiProperties.uiType = assignType;
     }
 };
+
+uiObjectProperties ReadUIObjPropertiesFromJSON(const nlohmann::json& jsonDoc, MathParser& mathParser);
+nlohmann::json WriteUIObjPropertiesToJSON(const uiObjectProperties& uiObjProperties);
 
 #endif //DGTKPROJECT_UI_HPP
