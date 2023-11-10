@@ -151,6 +151,8 @@ void Game::TransitionTo(Scene* scene) {
     for(auto iterator = currentScene->keyListeners.begin(); iterator != currentScene->keyListeners.end(); ++iterator) {
         inputSystem->AddListener(iterator->second, ListenerType::KeyPressListener);
     } // for each inputListener in Scene
+
+    /* TODO: Create Map, MapView, Player */
 }
 
 bool Game::MoveCreature(Creature* creature, MapLocation location) {

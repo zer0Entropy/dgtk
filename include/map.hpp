@@ -52,7 +52,9 @@ struct TerrainProperties {
     sf::Texture*                    texture;
 };
 
-TerrainProperties ReadTerrainPropertiesFromJSON(const nlohmann::json& jsonDoc);
+class Game;
+
+TerrainProperties ReadTerrainPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);
 nlohmann::json WriteTerrainPropertiesToJSON(const TerrainProperties& terrainProperties);
 
 class Creature;
@@ -95,6 +97,7 @@ const std::vector<std::string> MapPropertyNames = {
         {"height"},
         {"texture_path"},
         {"texture_width"},
+        {"texture_height"},
         {"terrain"},
         {"tile_placement"},
         {"default_terrain"},
@@ -120,7 +123,7 @@ struct Map {
     Tile            tileArray[MaxMapWidth][MaxMapHeight];
 };
 
-MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc);
+MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);
 nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties);
 
 void GenerateMap(Map* map);

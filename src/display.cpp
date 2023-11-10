@@ -110,17 +110,18 @@ void DisplaySystem::DrawScene() {
 void DisplaySystem::DrawView(const MapView& view, const Map& map) {
     int left(0);
     int top(0);
-    if(view.centerLocation.x > view.widthInTiles / 2) {
-        left = view.centerLocation.x - (view.widthInTiles / 2);
+    const MapViewProperties& viewProperties(view.properties);
+    if(view.properties.centerLocation.x > viewProperties.widthInTiles / 2) {
+        left = viewProperties.centerLocation.x - (viewProperties.widthInTiles / 2);
     }
-    if(view.centerLocation.y > view.heightInTiles / 2) {
-        top = view.centerLocation.y - (view.heightInTiles / 2);
+    if(viewProperties.centerLocation.y > viewProperties.heightInTiles / 2) {
+        top = viewProperties.centerLocation.y - (viewProperties.heightInTiles / 2);
     }
 
     int tileWidth(map.properties.textureWidth * game->GetDisplayConfig().tileScaleX);
     int tileHeight(map.properties.textureHeight * game->GetDisplayConfig().tileScaleY);
-    for(int y = top; y < top + view.heightInTiles; ++y) {
-        for(int x = left; x < left + view.widthInTiles; ++x) {
+    for(int y = top; y < top + viewProperties.heightInTiles; ++y) {
+        for(int x = left; x < left + viewProperties.widthInTiles; ++x) {
             const Tile& tile(map.tileArray[y][x]);
             sf::Sprite* sprite(tile.sprite.get());
             sprite->setPosition((x - left) * tileWidth, (y - top) * tileHeight);

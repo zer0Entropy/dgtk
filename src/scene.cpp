@@ -28,7 +28,7 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                         auto propertyListsJSON = uiObjListIter.value();
                         for (auto propertyListIter = propertyListsJSON.begin();
                              propertyListIter != propertyListsJSON.end(); ++propertyListIter) {
-                            auto propertyListName = propertyListIter.key();
+                            std::string_view propertyListName = propertyListIter.key();
                             auto propertyList = propertyListIter.value();
 
                             // {propertyListName: decoration_properties propertyList: [dec_properties]}
@@ -50,10 +50,12 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                     } // for(uiObjListIter)
                 } // else if(keyID == uiObjects)
                 else if(keyID == ScenePropertyID::MapView) {
-
+                    auto mapViewJSON = scenePropertyIter.value();
+                    sceneProperties.viewProperties = ReadMapViewPropertiesFromJSON(mapViewJSON, game);
                 }  // else if(keyID == MapView)
                 else if(keyID == ScenePropertyID::Map) {
-
+                    auto mapJSON = scenePropertyIter.value();
+                    sceneProperties.mapProperties = ReadMapPropertiesFromJSON(mapJSON, game);
                 }  // else if(keyID == Map)
             } // if(findKey)
         } // for(sceneKeyIndex)

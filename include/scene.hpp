@@ -32,14 +32,16 @@ const std::vector<std::string> ScenePropertyNames{
         {"ui_objects"},
         {"ui_object_properties"},
         {"decoration_properties"},
-        {"map_view"},
-        {"map"}
+        {"map_view_properties"},
+        {"map_properties"}
 };
 
 struct SceneProperties {
     UniqueID            id;
-    std::vector<uiObjectProperties> uiObjProperties;
-    std::vector<DecorationProperties> decorationProperties;
+    std::vector<uiObjectProperties>             uiObjProperties;
+    std::vector<DecorationProperties>           decorationProperties;
+    MapProperties                               mapProperties;
+    MapViewProperties                           viewProperties;
 };
 
 struct Scene {

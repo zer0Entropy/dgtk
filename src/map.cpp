@@ -3,42 +3,38 @@
 //
 #include <SFML/Graphics/Sprite.hpp>
 #include "../include/map.hpp"
+#include "../include/game.hpp"
+#include "../include/log.hpp"
 
-TerrainProperties ReadTerrainPropertiesFromJSON(const nlohmann::json& jsonDoc) {
+TerrainProperties ReadTerrainPropertiesFromJSON(const nlohmann::json& terrainJSON, Game* game) {
     TerrainProperties terrainProperties;
 
-    auto terrainJSON = jsonDoc.begin().value();
     auto findTerrainType = terrainJSON.find(TerrainPropertyNames.at((int) TerrainPropertyID::TerrainType));
+    auto findWalkable = terrainJSON.find(TerrainPropertyNames.at((int)TerrainPropertyID::Walkable));
+    auto findTexturePosition = terrainJSON.find(TerrainPropertyNames.at((int)TerrainPropertyID::TexturePosition));
 
-    for (auto terrainPropertyIter = terrainJSON.begin(); terrainPropertyIter != terrainJSON.end(); ++terrainPropertyIter) {
-
-        for (int terrainKeyIndex = 0; terrainKeyIndex < (int) TerrainPropertyID::TotalNumTerrainPropertyIDs; ++terrainKeyIndex) {
-            TerrainPropertyID keyID((TerrainPropertyID) terrainKeyIndex);
-            std::string_view key(TerrainPropertyNames.at(terrainKeyIndex));
-            if (terrainPropertyIter.key() == key) {
-                if (keyID == TerrainPropertyID::TerrainType) {
-                    std::string terrainString = terrainPropertyIter.value();
-                    if(terrainString.compare("floor") == 0) {
-                        terrainProperties.terrainType = TerrainType::Floor;
-                    } else if(terrainString.compare("wall") == 0) {
-                        terrainProperties.terrainType = TerrainType::Wall;
-                    }
-                } else if(keyID == TerrainPropertyID::Walkable) {
-                    terrainProperties.isWalkable = terrainPropertyIter.value();
-                } else if(keyID == TerrainPropertyID::TexturePosition) {
-                    auto positionJSON = terrainPropertyIter.value();
-                    auto findX = positionJSON.find("x");
-                    auto findY = positionJSON.find("y");
-                    if(findX != positionJSON.end()) {
-                        terrainProperties.texturePosition.x = findX->get<int>();
-                    }
-                    if(findY != positionJSON.end()) {
-                        terrainProperties.texturePosition.x = findY->get<int>();
-                    }
-                }
+    if(findTerrainType != terrainJSON.end()) {
+        terrainProperties.name = findTerrainType.value();
+        for(int terrainTypeIndex = 0; terrainTypeIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainTypeIndex) {
+            if(terrainProperties.name.compare(TerrainTypeNames.at(terrainTypeIndex)) == 0) {
+                terrainProperties.terrainType = (TerrainType)terrainTypeIndex;
             }
-            } // if(terrainPropertyIter.key == key)
-        } // for(terrainKeyIndex)
+        }
+    }
+    if(findWalkable != terrainJSON.end()) {
+        terrainProperties.isWalkable = findWalkable.value();
+    }
+    if(findTexturePosition != terrainJSON.end()) {
+        auto positionJSON = findTexturePosition.value();
+        auto findX = positionJSON.find("x");
+        auto findY = positionJSON.find("y");
+        if(findX != positionJSON.end()) {
+            terrainProperties.texturePosition.x = findX.value();
+        }
+        if(findY != positionJSON.end()) {
+            terrainProperties.texturePosition.y = findY.value();
+        }
+    }
 
     return terrainProperties;
 }
@@ -82,89 +78,107 @@ void GenerateMap(Map* map) {
     }
 }
 
-MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc) {
+MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game) {
     MapProperties mapProperties;
 
-    auto mapJSON = jsonDoc.begin().value();
-
-    for (auto mapPropertyIter = mapJSON.begin(); mapPropertyIter != mapJSON.end(); ++mapPropertyIter) {
-
-        for (int mapKeyIndex = 0; mapKeyIndex < (int) MapPropertyID::TotalNumMapPropertyIDs; ++mapKeyIndex) {
-            MapPropertyID keyID((MapPropertyID) mapKeyIndex);
-            std::string_view key(MapPropertyNames.at(mapKeyIndex));
-            if (mapPropertyIter.key() == key) {
-                if (keyID == MapPropertyID::MapName) {
-                    mapProperties.name = mapPropertyIter.value();
-                } // if(keyID == MapID)
-                else if(keyID == MapPropertyID::Width) {
-                    mapProperties.width = mapPropertyIter.value();
-                }
-                else if(keyID == MapPropertyID::Height) {
-                    mapProperties.height = mapPropertyIter.value();
-                }
-                else if(keyID == MapPropertyID::TexturePath) {
-                    mapProperties.texturePath = mapPropertyIter.value();
-                }
-                else if(keyID == MapPropertyID::TextureWidth) {
-                    mapProperties.textureWidth = mapPropertyIter.value();
-                }
-                else if(keyID == MapPropertyID::TextureHeight) {
-                    mapProperties.textureHeight = mapPropertyIter.value();
-                }
-                else if(keyID == MapPropertyID::TerrainProperties) {
-                    auto terrainJSON = mapPropertyIter.value();
-                    for(auto terrainIter = terrainJSON.begin(); terrainIter != terrainJSON.end(); ++terrainIter) {
-                        TerrainProperties terrainProperties = ReadTerrainPropertiesFromJSON(terrainJSON);
-                        mapProperties.terrainProperties.insert(std::make_pair(terrainProperties.terrainType, terrainProperties));
+    for (int mapPropertyIndex = 0; mapPropertyIndex < (int) MapPropertyID::TotalNumMapPropertyIDs; ++mapPropertyIndex) {
+        MapPropertyID keyID((MapPropertyID) mapPropertyIndex);
+        std::string_view key(MapPropertyNames.at(mapPropertyIndex));
+        auto findKey = jsonDoc.find(key);
+        if (findKey != jsonDoc.end()) {
+            switch (keyID) {
+                case MapPropertyID::MapName:
+                    mapProperties.name = findKey->get<std::string>();
+                    break;
+                case MapPropertyID::Width:
+                    mapProperties.width = findKey->get<int>();
+                    break;
+                case MapPropertyID::Height:
+                    mapProperties.height = findKey->get<int>();
+                    break;
+                case MapPropertyID::TexturePath:
+                    mapProperties.texturePath = findKey->get<std::string>();
+                    break;
+                case MapPropertyID::TextureWidth:
+                    mapProperties.textureWidth = findKey->get<int>();
+                    break;
+                case MapPropertyID::TextureHeight:
+                    mapProperties.textureHeight = findKey->get<int>();
+                    break;
+                case MapPropertyID::TerrainProperties: {
+                    auto terrainJSON = *findKey;
+                    for (auto terrainIter = terrainJSON.begin(); terrainIter != terrainJSON.end(); ++terrainIter) {
+                        TerrainProperties terrainProperties = ReadTerrainPropertiesFromJSON(terrainIter.value(), game);
+                        mapProperties.terrainProperties.insert(
+                                std::make_pair(terrainProperties.terrainType, terrainProperties));
                     }
+                    break;
                 }
-                else if(keyID == MapPropertyID::TilePlacementStrategy) {
-                    auto tilePlacementJSON = mapPropertyIter.value();
-                    for(auto tilePlacementIter = tilePlacementJSON.begin();
-                        tilePlacementIter != tilePlacementJSON.end(); ++tilePlacementIter) {
-                        if (keyID == MapPropertyID::DefaultTerrain) {
-                            std::string defaultTerrainString = tilePlacementIter.value();
-                            for(int terrainTypeIndex = 0; terrainTypeIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainTypeIndex) {
-                                if(defaultTerrainString.compare(TerrainTypeNames.at(terrainTypeIndex)) == 0) {
-                                    mapProperties.strategy.defaultTerrainType = (TerrainType)terrainTypeIndex;
-                                }
-                            } // for each terrainType
-                        } else if (keyID == MapPropertyID::NorthEdge) {
-                            std::string edgeString = tilePlacementIter.value();
-                            for(int terrainTypeIndex = 0; terrainTypeIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainTypeIndex) {
-                                if(edgeString.compare(TerrainTypeNames.at(terrainTypeIndex)) == 0) {
-                                    mapProperties.strategy.edges[(int)Direction::Up] = (TerrainType)terrainTypeIndex;
-                                }
-                            } // for each terrainType
-                        } else if (keyID == MapPropertyID::SouthEdge) {
-                            std::string edgeString = tilePlacementIter.value();
-                            for(int terrainTypeIndex = 0; terrainTypeIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainTypeIndex) {
-                                if(edgeString.compare(TerrainTypeNames.at(terrainTypeIndex)) == 0) {
-                                    mapProperties.strategy.edges[(int)Direction::Down] = (TerrainType)terrainTypeIndex;
-                                }
-                            } // for each terrainType
-                        } else if (keyID == MapPropertyID::WestEdge) {
-                            std::string edgeString = tilePlacementIter.value();
-                            for(int terrainTypeIndex = 0; terrainTypeIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainTypeIndex) {
-                                if(edgeString.compare(TerrainTypeNames.at(terrainTypeIndex)) == 0) {
-                                    mapProperties.strategy.edges[(int)Direction::Left] = (TerrainType)terrainTypeIndex;
-                                }
-                            } // for each terrainType
-                        } else if (keyID == MapPropertyID::EastEdge) {
-                            std::string edgeString = tilePlacementIter.value();
-                            for(int terrainTypeIndex = 0; terrainTypeIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainTypeIndex) {
-                                if(edgeString.compare(TerrainTypeNames.at(terrainTypeIndex)) == 0) {
-                                    mapProperties.strategy.edges[(int)Direction::Right] = (TerrainType)terrainTypeIndex;
-                                }
-                            } // for each terrainType
+                case MapPropertyID::TilePlacementStrategy: {
+                    mapProperties.strategy.edges[(int)Direction::None] = TerrainType::Empty;
+                    auto tilePlacementJSON = *findKey;
+                    auto findDefault = tilePlacementJSON.find(MapPropertyNames.at((int) MapPropertyID::DefaultTerrain));
+                    auto findNorthEdge = tilePlacementJSON.find(MapPropertyNames.at((int) MapPropertyID::NorthEdge));
+                    auto findSouthEdge = tilePlacementJSON.find(MapPropertyNames.at((int) MapPropertyID::SouthEdge));
+                    auto findWestEdge = tilePlacementJSON.find(MapPropertyNames.at((int) MapPropertyID::WestEdge));
+                    auto findEastEdge = tilePlacementJSON.find(MapPropertyNames.at((int) MapPropertyID::EastEdge));
+                    if (findDefault != tilePlacementJSON.end()) {
+                        std::string terrainTypeString = findDefault->get<std::string>();
+                        if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
+                            mapProperties.strategy.defaultTerrainType = TerrainType::Empty;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
+                            mapProperties.strategy.defaultTerrainType = TerrainType::Floor;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Wall)) == 0) {
+                            mapProperties.strategy.defaultTerrainType = TerrainType::Wall;
                         }
                     }
+                    if (findNorthEdge != tilePlacementJSON.end()) {
+                        std::string terrainTypeString = findDefault->get<std::string>();
+                        if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Up] = TerrainType::Empty;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Up] = TerrainType::Floor;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Wall)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Up] = TerrainType::Wall;
+                        }
+                    }
+                    if (findSouthEdge != tilePlacementJSON.end()) {
+                        std::string terrainTypeString = findDefault->get<std::string>();
+                        if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Down] = TerrainType::Empty;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Down] = TerrainType::Floor;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Wall)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Down] = TerrainType::Wall;
+                        }
+                    }
+                    if (findWestEdge != tilePlacementJSON.end()) {
+                        std::string terrainTypeString = findDefault->get<std::string>();
+                        if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Left] = TerrainType::Empty;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Left] = TerrainType::Floor;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Wall)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Left] = TerrainType::Wall;
+                        }
+                    }
+                    if (findEastEdge != tilePlacementJSON.end()) {
+                        std::string terrainTypeString = findDefault->get<std::string>();
+                        if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Right] = TerrainType::Empty;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Right] = TerrainType::Floor;
+                        } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Wall)) == 0) {
+                            mapProperties.strategy.edges[(int) Direction::Right] = TerrainType::Wall;
+                        }
+                    }
+                    break;
                 }
-            } // if(mapPropertyIter.key() == key)
-        } // for(mapKeyIndex)
 
-    }  // for(mapPropertyIter)
-    
+            } // switch(keyID)
+        } // if(findKey)
+    } // for(mapPropertyIndex)
+
     return mapProperties;
 }
 
