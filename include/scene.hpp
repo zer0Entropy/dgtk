@@ -22,8 +22,8 @@ enum class ScenePropertyID {
     uiObjects,
     uiObjectProperties,
     DecorationProperties,
-    MapView,
     Map,
+    MapView,
     TotalNumScenePropertyIDs
 };
 
@@ -32,8 +32,8 @@ const std::vector<std::string> ScenePropertyNames{
         {"ui_objects"},
         {"ui_object_properties"},
         {"decoration_properties"},
-        {"map_view_properties"},
-        {"map_properties"}
+        {"map_properties"},
+        {"map_view_properties"}
 };
 
 struct SceneProperties {
@@ -51,6 +51,9 @@ struct Scene {
     std::map<UniqueID, InputListener*>          keyListeners;
     std::unique_ptr<Map>                        map;
     MapView*                                    mapView;
+    Scene();
+    Scene(const Scene& copy) = default;
+    ~Scene() = default;
 };
 
 SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);

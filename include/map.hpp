@@ -10,6 +10,7 @@
 #include "id.hpp"
 #include "location.hpp"
 #include "position.hpp"
+#include "display.hpp"
 
 #ifndef DGTKPROJECT_MAP_HPP
 #define DGTKPROJECT_MAP_HPP
@@ -126,6 +127,6 @@ struct Map {
 MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);
 nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties);
 
-void GenerateMap(Map* map);
+void GenerateMap(Map* map, const DisplayConfig& displayConfig);
 
 #endif //DGTKPROJECT_MAP_HPP

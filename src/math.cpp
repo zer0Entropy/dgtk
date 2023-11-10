@@ -292,7 +292,7 @@ std::string MathParser::ReplaceVariables(std::string_view expression) {
                 simplifiedExpression.append(std::to_string(value));
                 if (workingCopy.length() > keyPosition + key.length()) {
                     simplifiedExpression.append(
-                            workingCopy.substr(keyPosition + key.length() + 1, workingCopy.length() - keyPosition - key.length() - 1));
+                            workingCopy.substr(keyPosition + key.length(), workingCopy.length() - keyPosition - key.length()));
                 }
                 workingCopy = simplifiedExpression;
             }

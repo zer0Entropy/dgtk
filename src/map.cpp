@@ -44,7 +44,7 @@ nlohmann::json WriteTerrainPropertiesToJSON(const TerrainProperties& terrainProp
     return terrainJSON;
 }
 
-void GenerateMap(Map* map) {
+void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
     const MapProperties& properties(map->properties);
     const TilePlacementStrategy& strategy(properties.strategy);
 
@@ -66,13 +66,17 @@ void GenerateMap(Map* map) {
         }
     }
 
+    float scaleX = displayConfig.tileScaleX;
+    float scaleY = displayConfig.tileScaleY;
+
     for(int y = 0; y < properties.height; ++y) {
         for(int x = 0; x < properties.width; ++x) {
             Tile& tile( map->tileArray[y][x] );
             TerrainType terrainType = terrainMap[y][x];
             tile.terrain = &map->properties.terrainProperties.at(terrainType);
             tile.sprite.reset(new sf::Sprite);
-            tile.creature = nullptr;
+            tile.sprite->setTexture(*tile.terrain->texture);
+            tile.sprite->setScale(scaleX, scaleY);
             tile.isVisible = true;
         }
     }
@@ -178,6 +182,10 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
             } // switch(keyID)
         } // if(findKey)
     } // for(mapPropertyIndex)
+
+    MathParser& mathParser = game->GetMathParser();
+    mathParser.RegisterVariable(MapPropertyNames.at((int)MapPropertyID::TextureWidth), mapProperties.textureWidth);
+    mathParser.RegisterVariable(MapPropertyNames.at((int)MapPropertyID::TextureHeight), mapProperties.textureHeight);
 
     return mapProperties;
 }

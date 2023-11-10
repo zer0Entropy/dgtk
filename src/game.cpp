@@ -7,6 +7,7 @@
 #include "../include/input.hpp"
 #include "../include/resource.hpp"
 #include "../include/decoration.hpp"
+#include "../include/view.hpp"
 
 const std::string Game::configFilename = "game.cfg";
 
@@ -153,6 +154,47 @@ void Game::TransitionTo(Scene* scene) {
     } // for each inputListener in Scene
 
     /* TODO: Create Map, MapView, Player */
+    if(!scene->properties.mapProperties.name.empty()) {
+        scene->map = std::unique_ptr<Map>(new Map);
+        Map& map = *scene->map.get();
+        map.properties = scene->properties.mapProperties;
+        for(int y = 0; y < MaxMapHeight; ++y) {
+            for(int x = 0; x < MaxMapWidth; ++x) {
+                Tile& tile = map.tileArray[y][x];
+                tile.terrain = nullptr;
+                tile.creature = nullptr;
+                tile.sprite.reset(nullptr);
+                tile.isVisible = false;
+            }
+        }
+        for(int terrainIndex = 1; terrainIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainIndex) {
+            TerrainType type = (TerrainType)terrainIndex;
+            TerrainProperties& terrain = scene->map->properties.terrainProperties.at(type);
+            resourceSystem->LoadTexture(    TerrainTypeNames.at(terrainIndex),
+                                            scene->map->properties.texturePath,
+                                            terrain.texturePosition,
+                                            scene->map->properties.textureWidth,
+                                            scene->map->properties.textureHeight);
+            terrain.texture = resourceSystem->GetTexture(TerrainTypeNames.at(terrainIndex));
+        }
+        GenerateMap(scene->map.get(), displayConfig);
+
+        UniqueID playerName("Player1");
+        sf::Texture* playerTexture(nullptr);
+        std::string texturePath("/texture/oryx/oryx_16bit_fantasy_creatures_trans.png");
+        Position texturePosition = { 24, 24 };
+        int textureWidth(24), textureHeight(24);
+        MapLocation playerLocation = {12,7};
+        resourceSystem->LoadTexture(playerName, texturePath, texturePosition, textureWidth, textureHeight);
+        playerTexture = resourceSystem->GetTexture(playerName);
+        CreatePlayer(playerName, playerTexture, playerLocation, map.properties);
+
+        scene->mapView = new MapView;
+        scene->mapView->properties = scene->properties.viewProperties;
+        scene->mapView->properties.widthInTiles = scene->mapView->properties.widthInPixels / (textureWidth * displayConfig.tileScaleX);
+        scene->mapView->properties.heightInTiles = scene->mapView->properties.heightInPixels / (textureHeight * displayConfig.tileScaleY);
+        CenterViewOnPlayer(*scene->mapView, *scene->map.get(), playerLocation);
+    }
 }
 
 bool Game::MoveCreature(Creature* creature, MapLocation location) {
@@ -573,6 +615,8 @@ Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocati
     creature->location = location;
     creature->position = { (int)(location.x * mapProperties.textureWidth * displayConfig.tileScaleX),
                            (int)(location.y * mapProperties.textureHeight * displayConfig.tileScaleY) };
-    creature->sprite = nullptr;
+    creature->sprite.reset(new sf::Sprite);
+    creature->sprite->setTexture(*creature->texture);
+    creature->sprite->setPosition(creature->position.x, creature->position.y);
     return creature;
 }

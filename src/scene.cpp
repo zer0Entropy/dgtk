@@ -49,14 +49,14 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                         } // for(propertyListIter)
                     } // for(uiObjListIter)
                 } // else if(keyID == uiObjects)
-                else if(keyID == ScenePropertyID::MapView) {
-                    auto mapViewJSON = scenePropertyIter.value();
-                    sceneProperties.viewProperties = ReadMapViewPropertiesFromJSON(mapViewJSON, game);
-                }  // else if(keyID == MapView)
                 else if(keyID == ScenePropertyID::Map) {
                     auto mapJSON = scenePropertyIter.value();
                     sceneProperties.mapProperties = ReadMapPropertiesFromJSON(mapJSON, game);
                 }  // else if(keyID == Map)
+                else if(keyID == ScenePropertyID::MapView) {
+                    auto mapViewJSON = scenePropertyIter.value();
+                    sceneProperties.viewProperties = ReadMapViewPropertiesFromJSON(mapViewJSON, game);
+                }  // else if(keyID == MapView)
             } // if(findKey)
         } // for(sceneKeyIndex)
 
@@ -92,3 +92,8 @@ void SceneTransition::ReceiveInput(const sf::Event& event) {
     }
 }
 
+Scene::Scene() {
+    properties.id = "";
+    properties.mapProperties.name = "";
+    mapView = nullptr;
+}
