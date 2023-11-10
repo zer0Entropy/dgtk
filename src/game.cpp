@@ -187,7 +187,8 @@ void Game::TransitionTo(Scene* scene) {
         MapLocation playerLocation = {12,7};
         resourceSystem->LoadTexture(playerName, texturePath, texturePosition, textureWidth, textureHeight);
         playerTexture = resourceSystem->GetTexture(playerName);
-        CreatePlayer(playerName, playerTexture, playerLocation, map.properties);
+        Player* player = CreatePlayer(playerName, playerTexture, playerLocation, map.properties);
+        (map.tileArray[playerLocation.y][playerLocation.x]).creature = player->character.get();
 
         scene->mapView = new MapView;
         scene->mapView->properties = scene->properties.viewProperties;
@@ -617,6 +618,7 @@ Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocati
                            (int)(location.y * mapProperties.textureHeight * displayConfig.tileScaleY) };
     creature->sprite.reset(new sf::Sprite);
     creature->sprite->setTexture(*creature->texture);
+    creature->sprite->setScale(displayConfig.tileScaleX, displayConfig.tileScaleY);
     creature->sprite->setPosition(creature->position.x, creature->position.y);
     return creature;
 }
