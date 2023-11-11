@@ -16,25 +16,55 @@ void KeyPressListener::ReceiveInput(const sf::Event& event) {
 
     if(event.type == sf::Event::KeyPressed) {
         sf::Keyboard::Key keyPressed = event.key.code;
-        Action *action = GetAction(keyPressed);
-        if(action) {
-            switch(action->type) {
-                case ActionType::None:                                  break;
+        Action* action = GetAction(keyPressed);
+        Action* anyKeyAction = GetAction(sf::Keyboard::Key::Unknown);
+        if(anyKeyAction) {
+            switch (anyKeyAction->type) {
+                case ActionType::None:
+                    break;
                 case ActionType::TransitionToScene: {
-                    UniqueID sceneID = action->targetID;
+                    UniqueID sceneID = anyKeyAction->targetID;
                     std::string path = resourceSystem->GetScenePath(sceneID);
                     Scene* scene = resourceSystem->LoadScene(path, *game);
                     game->TransitionTo(scene);
-                    break; }
+                    break;
+                }
                 case ActionType::MoveCreature: {
-                    UniqueID actorID = action->actorID;
+                    UniqueID actorID = anyKeyAction->actorID;
                     Creature* creaturePtr = game->FindCreature(actorID);
-                    game->MoveCreature(creaturePtr, action->targetLocation);
-                    break; }
-                case ActionType::TotalNumActionTypes:       default:    break;
-            }
-        }
-    }
+                    game->MoveCreature(creaturePtr, anyKeyAction->targetLocation);
+                    break;
+                }
+                case ActionType::TotalNumActionTypes:
+                default:
+                    break;
+            } // switch(action->type)
+        } // if(anyKeyAction)
+        else if(action) {
+            if(action->triggerKey == sf::Keyboard::Key::Unknown || keyPressed == action->triggerKey) {
+                switch (action->type) {
+                    case ActionType::None:
+                        break;
+                    case ActionType::TransitionToScene: {
+                        UniqueID sceneID = action->targetID;
+                        std::string path = resourceSystem->GetScenePath(sceneID);
+                        Scene* scene = resourceSystem->LoadScene(path, *game);
+                        game->TransitionTo(scene);
+                        break;
+                    }
+                    case ActionType::MoveCreature: {
+                        UniqueID actorID = action->actorID;
+                        Creature* creaturePtr = game->FindCreature(actorID);
+                        game->MoveCreature(creaturePtr, action->targetLocation);
+                        break;
+                    }
+                    case ActionType::TotalNumActionTypes:
+                    default:
+                        break;
+                } // switch(action->type)
+            } // if(action->triggerKey == "any" || keyPressed == triggerKey)
+        } // if(action)
+    } // if(event.type == keyPressed)
 }
 
 void KeyPressListener::AddKeyMapping(sf::Keyboard::Key keyPress, Action action) {

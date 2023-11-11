@@ -141,6 +141,7 @@ void Game::TransitionTo(Scene* scene) {
             case ActionType::TransitionToScene: {
                 KeyPressListener* keyListener = new KeyPressListener(this);
                 scene->keyListeners.insert(std::make_pair(action.actorID, keyListener));
+                keyListener->AddKeyMapping(action.triggerKey, action);
                 //SceneTransition* sceneTransition = new SceneTransition(action.trigger, action.targetID, this);
                 //scene->keyListeners.insert(std::make_pair(action.actorID, sceneTransition));
                 break; }
