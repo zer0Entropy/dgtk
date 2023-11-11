@@ -136,18 +136,17 @@ void Game::TransitionTo(Scene* scene) {
     for(auto actionIter = scene->properties.actions.begin(); actionIter != scene->properties.actions.end(); ++actionIter) {
         Action action = actionIter->second;
         ActionType actionType = action.type;
-        switch(actionType) {
-            case ActionType::None:                              break;
-            case ActionType::TransitionToScene: {
-                KeyPressListener* keyListener = new KeyPressListener(this);
+        ActionTrigger actionTrigger = action.trigger;
+        KeyPressListener* keyListener(nullptr);
+        if(actionTrigger == ActionTrigger::OnKeyPress && actionType != ActionType::None) {
+            auto listenIter = scene->keyListeners.find(action.actorID);
+            if(listenIter != scene->keyListeners.end()) {
+                 keyListener = static_cast<KeyPressListener*>(listenIter->second);
+            } else {
+                keyListener = new KeyPressListener(this);
                 scene->keyListeners.insert(std::make_pair(action.actorID, keyListener));
-                keyListener->AddKeyMapping(action.triggerKey, action);
-                //SceneTransition* sceneTransition = new SceneTransition(action.trigger, action.targetID, this);
-                //scene->keyListeners.insert(std::make_pair(action.actorID, sceneTransition));
-                break; }
-            case ActionType::MoveCreature:
-                break;
-            case ActionType::TotalNumActionTypes:   default:    break;
+            }
+            keyListener->AddKeyMapping(action.triggerKey, action);
         }
     }
 
@@ -191,6 +190,7 @@ void Game::TransitionTo(Scene* scene) {
         playerTexture = resourceSystem->GetTexture(playerName);
         Player* player = CreatePlayer(playerName, playerTexture, playerLocation, map.properties);
         (map.tileArray[playerLocation.y][playerLocation.x]).creature = player->character.get();
+        scene->creatures.push_back(player->character.get());
 
         scene->mapView = new MapView;
         scene->mapView->properties = scene->properties.viewProperties;

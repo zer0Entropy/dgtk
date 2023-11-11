@@ -86,30 +86,7 @@ nlohmann::json WriteScenePropertiesToJSON(const SceneProperties& sceneProperties
     nlohmann::json sceneJSON;
     return sceneJSON;
 }
-/*
-SceneTransition::SceneTransition(ActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr):
-    InputListener(gamePtr), trigger(triggerType), sceneID(transitionSceneID), game(gamePtr) {
 
-}
-
-void SceneTransition::ReceiveInput(const sf::Event& event) {
-    Scene* scene(nullptr);
-    ResourceSystem* resourceSystem(game->GetResourceSystem());
-
-    if(trigger == ActionTrigger::OnKeyPress) {
-
-        if (event.type == sf::Event::EventType::KeyPressed) {
-            std::string path = resourceSystem->GetScenePath(sceneID);
-            scene = resourceSystem->LoadScene(path, *game);
-        } // sf::Event::KeyPressed
-
-    } // trigger: OnKeyPress
-
-    if(scene) {
-        game->TransitionTo(scene);
-    }
-}
-*/
 Scene::Scene() {
     properties.id = "";
     properties.mapProperties.name = "";

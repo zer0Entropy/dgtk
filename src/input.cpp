@@ -20,8 +20,7 @@ void KeyPressListener::ReceiveInput(const sf::Event& event) {
         Action* anyKeyAction = GetAction(sf::Keyboard::Key::Unknown);
         if(anyKeyAction) {
             switch (anyKeyAction->type) {
-                case ActionType::None:
-                    break;
+                case ActionType::None:                              break;
                 case ActionType::TransitionToScene: {
                     UniqueID sceneID = anyKeyAction->targetID;
                     std::string path = resourceSystem->GetScenePath(sceneID);
@@ -29,15 +28,8 @@ void KeyPressListener::ReceiveInput(const sf::Event& event) {
                     game->TransitionTo(scene);
                     break;
                 }
-                case ActionType::MoveCreature: {
-                    UniqueID actorID = anyKeyAction->actorID;
-                    Creature* creaturePtr = game->FindCreature(actorID);
-                    game->MoveCreature(creaturePtr, anyKeyAction->targetLocation);
-                    break;
-                }
-                case ActionType::TotalNumActionTypes:
-                default:
-                    break;
+                case ActionType::MoveCreature:                      break;
+                case ActionType::TotalNumActionTypes:   default:    break;
             } // switch(action->type)
         } // if(anyKeyAction)
         else if(action) {
@@ -55,7 +47,19 @@ void KeyPressListener::ReceiveInput(const sf::Event& event) {
                     case ActionType::MoveCreature: {
                         UniqueID actorID = action->actorID;
                         Creature* creaturePtr = game->FindCreature(actorID);
-                        game->MoveCreature(creaturePtr, action->targetLocation);
+                        MapLocation currentLocation = creaturePtr->properties.location;
+                        MapLocation targetLocation(currentLocation);
+                        Direction targetDirection(action->targetDirection);
+                        if(targetDirection == Direction::Up) {
+                            targetLocation.y--;
+                        } else if(targetDirection == Direction::Down) {
+                            targetLocation.y++;
+                        } else if(targetDirection == Direction::Left) {
+                            targetLocation.x--;
+                        } else if(targetDirection == Direction::Right) {
+                            targetLocation.x++;
+                        }
+                        game->MoveCreature(creaturePtr, targetLocation);
                         break;
                     }
                     case ActionType::TotalNumActionTypes:
@@ -139,4 +143,8 @@ void InputSystem::RemoveListener(InputListener* listener, ListenerType type) {
             listenList.erase(iterator);
         }
     }
+}
+
+const std::vector<InputListener*>& InputSystem::GetKeyPressListeners() const {
+    return listeners[(int)ListenerType::KeyPressListener];
 }

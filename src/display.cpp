@@ -131,7 +131,7 @@ void DisplaySystem::DrawView(const MapView& view, const Map& map) {
                 sprite->setPosition((x - left) * tileWidth + offsetX, (y - top) * tileHeight + offsetY);
                 window->draw(*tile.sprite);
                 if (tile.creature) {
-                    tile.creature->sprite->setPosition(tile.sprite->getPosition());
+                    tile.creature->sprite->setPosition((x - left) * tileWidth + offsetX, (y - top) * tileHeight + offsetY);
                     window->draw(*tile.creature->sprite);
                 }
             }

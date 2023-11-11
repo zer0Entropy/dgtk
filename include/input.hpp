@@ -59,6 +59,7 @@ public:
 
     void AddListener(InputListener* listener, ListenerType type);
     void RemoveListener(InputListener* listener, ListenerType type);
+    const std::vector<InputListener*>& GetKeyPressListeners() const;
 private:
     DisplaySystem* displaySystem;
     std::vector<InputListener*>         listeners[(int)ListenerType::TotalNumListenerTypes];

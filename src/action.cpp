@@ -62,28 +62,6 @@ Action ReadActionFromJSON(const nlohmann::json& actionJSON, Game *game) {
         } else if(directionString.compare("right") == 0) {
             action.targetDirection = Direction::Right;
         }
-        if(action.targetDirection != Direction::None) {
-            Creature* actor = game->FindCreature(action.actorID);
-            MapLocation origin = actor->properties.location;
-            MapLocation destination(origin);
-            switch(action.targetDirection) {
-                case Direction::None:   break;
-                case Direction::Up:
-                    destination.y--;
-                    break;
-                case Direction::Down:
-                    destination.y++;
-                    break;
-                case Direction::Left:
-                    destination.x--;
-                    break;
-                case Direction::Right:
-                    destination.x++;
-                    break;
-                case Direction::TotalNumCardinalDirections:     default:    break;
-            }
-            action.targetLocation = destination;
-        }
     }
 
     return action;

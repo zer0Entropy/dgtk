@@ -60,17 +60,5 @@ struct Scene {
 
 SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);
 nlohmann::json WriteScenePropertiesToJSON(const SceneProperties& sceneProperties);
-/*
-class SceneTransition: public InputListener {
-public:
-    SceneTransition(ActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr);
-    SceneTransition(const SceneTransition& copy) = default;
-    ~SceneTransition() = default;
-    void ReceiveInput(const sf::Event& event) override;
-private:
-    ActionTrigger trigger;
-    UniqueID sceneID;
-    Game* game;
-};
-*/
+
 #endif //DGTKPROJECT_SCENE_HPP
