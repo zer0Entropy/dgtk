@@ -56,13 +56,22 @@ void Game::Init() {
 
 void Game::Update() {
     for(int systemIndex = 0; systemIndex < (int)SystemID::TotalNumSystems; ++systemIndex) {
-        systems[systemIndex]->Update();
+        System* system = systems[systemIndex].get();
+        if(system) {
+            systems[systemIndex]->Update();
+        }
     }
 }
 
 void Game::Shutdown() {
+    SignalInterrupt();
     for(int systemIndex = 0; systemIndex < (int)SystemID::TotalNumSystems; ++systemIndex) {
-        systems[systemIndex]->Shutdown();
+        if(systems[systemIndex] != nullptr) {
+            systems[systemIndex]->Shutdown();
+        }
+    }
+    for(int systemIndex = 0; systemIndex < (int)SystemID::TotalNumSystems; ++systemIndex) {
+        systems[systemIndex].reset(nullptr);
     }
 }
 
@@ -593,7 +602,10 @@ Decoration* Game::CreateDecoration(const uiObjectProperties& uiObjProperties, co
 
 void Game::SignalInterrupt() {
     for(auto& system : systems) {
-        system.get()->SetInterrupt();
+        System* sysPtr = system.get();
+        if(sysPtr) {
+            sysPtr->SetInterrupt();
+        }
     }
 }
 

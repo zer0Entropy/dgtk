@@ -16,13 +16,15 @@ enum class ActionType {
     None = 0,
     TransitionToScene,
     MoveCreature,
+    QuitGame,
     TotalNumActionTypes
 };
 
 const std::vector<std::string> ActionTypeNames = {
         {"none"},
         {"transition_to_scene"},
-        {"move_creature"}
+        {"move_creature"},
+        {"quit_game"}
 };
 
 enum class ActionTrigger {
@@ -41,7 +43,8 @@ const std::map<std::string,sf::Keyboard::Key>   KeyIdentifiers = {
         {{"up_arrow_key"}, sf::Keyboard::Up},
         {{"down_arrow_key"}, sf::Keyboard::Down},
         {{"left_arrow_key"}, sf::Keyboard::Left},
-        {{"right_arrow_key"}, sf::Keyboard::Right}
+        {{"right_arrow_key"}, sf::Keyboard::Right},
+        {{"escape_key"}, sf::Keyboard::Escape}
 };
 
 struct Action {

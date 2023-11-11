@@ -27,6 +27,8 @@ Action ReadActionFromJSON(const nlohmann::json& actionJSON, Game *game) {
             action.type = ActionType::TransitionToScene;
         } else if(typeString.compare(ActionTypeNames.at((int)ActionType::MoveCreature)) == 0) {
             action.type = ActionType::MoveCreature;
+        } else if(typeString.compare(ActionTypeNames.at((int)ActionType::QuitGame)) == 0) {
+            action.type = ActionType::QuitGame;
         }
     }
     if(findTrigger != actionJSON.end()) {

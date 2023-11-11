@@ -62,6 +62,9 @@ void KeyPressListener::ReceiveInput(const sf::Event& event) {
                         game->MoveCreature(creaturePtr, targetLocation);
                         break;
                     }
+                    case ActionType::QuitGame:
+                        game->Shutdown();
+                        break;
                     case ActionType::TotalNumActionTypes:
                     default:
                         break;
