@@ -31,7 +31,7 @@ MapViewProperties ReadMapViewPropertiesFromJSON(const nlohmann::json& mapViewJSO
             int result = mathParser.EvaluateExpression(mathExpression);
             viewProperties.heightInPixels = result;
         } else {
-            viewProperties.heightInPixels = findWidth->get<int>();
+            viewProperties.heightInPixels = findHeight->get<int>();
         }
     }
     if(findPosition != mapViewJSON.end()) {
@@ -68,12 +68,12 @@ void CenterViewOnPlayer(MapView& view, const Map& map, MapLocation playerLocatio
     if(playerLocation.x < view.properties.widthInTiles / 2) {
         center.x = view.properties.widthInTiles / 2;
     } else if(playerLocation.x >= map.properties.width - (view.properties.widthInTiles / 2)) {
-        center.x = map.properties.width - (view.properties.widthInTiles / 2);
+        center.x = map.properties.width - (view.properties.widthInTiles / 2) - 1;
     }
     if(playerLocation.y < view.properties.heightInTiles / 2) {
         center.y = view.properties.heightInTiles / 2;
-    } else if(playerLocation.y >= map.properties.height - (view.properties.heightInTiles / 2)) {
-        center.y = map.properties.height - (view.properties.heightInTiles / 2);
+    } else if(playerLocation.y >= (map.properties.height - (view.properties.heightInTiles / 2)) - 1) {
+        center.y = map.properties.height - (view.properties.heightInTiles / 2) - 1;
     }
     view.properties.centerLocation = center;
 }

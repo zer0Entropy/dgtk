@@ -51,7 +51,7 @@ void Game::Init() {
         systems[systemIndex]->Init();
     }
     mathParser.RegisterVariable("window_width", displayConfig.windowProperties.width);
-    mathParser.RegisterVariable("window_height", displayConfig.windowProperties.height - displayConfig.windowHeightModifier);
+    mathParser.RegisterVariable("window_height", displayConfig.windowProperties.height);// - displayConfig.windowHeightModifier);
 }
 
 void Game::Update() {
@@ -349,7 +349,7 @@ Decoration* Game::CreateFrameSegment(Decoration* frame, FrameSegmentID segmentID
     sf::Sprite* sprite(nullptr);
 
     sf::Vector2u windowSize{ (unsigned int)displayConfig.windowProperties.width,
-                             (unsigned int)displayConfig.windowProperties.height - displayConfig.windowHeightModifier };
+                             (unsigned int)displayConfig.windowProperties.height }; //- displayConfig.windowHeightModifier };
     sf::Vector2u textureSize{ (unsigned int)(source.width * displayConfig.uiScaleX),
                               (unsigned int)(source.height * displayConfig.uiScaleY) };
 
@@ -423,7 +423,7 @@ Decoration* Game::CreateDecoration(const uiObjectProperties& uiObjProperties, co
     bool success(true);
 
     sf::Vector2u windowSize{ (unsigned int)displayConfig.windowProperties.width,
-                             (unsigned int)displayConfig.windowProperties.height - displayConfig.windowHeightModifier };
+                             (unsigned int)displayConfig.windowProperties.height };// - displayConfig.windowHeightModifier };
     sf::Vector2u textureSize{ (unsigned int)(uiObjProperties.textureSource.width * displayConfig.uiScaleX),
                               (unsigned int)(uiObjProperties.textureSource.height * displayConfig.uiScaleY) };
 

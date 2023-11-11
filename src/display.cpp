@@ -59,7 +59,7 @@ void DisplaySystem::InitWindow(WindowProperties properties) {
         window.release();
         window = nullptr;
     }
-    window = std::make_unique<sf::RenderWindow>(sf::VideoMode(properties.width, properties.height), properties.title );
+    window = std::make_unique<sf::RenderWindow>(sf::VideoMode(properties.width, properties.height), properties.title, sf::Style::None );
 }
 
 void DisplaySystem::CloseWindow() {
@@ -117,9 +117,6 @@ void DisplaySystem::DrawView(const MapView& view, const Map& map) {
     if(viewProperties.centerLocation.y > viewProperties.heightInTiles / 2) {
         top = viewProperties.centerLocation.y - (viewProperties.heightInTiles / 2);
     }
-
-    //int offsetX = viewProperties.position.x;
-    //int offsetY = viewProperties.position.y;
 
     int tileWidth(map.properties.textureWidth * game->GetDisplayConfig().tileScaleX);
     int tileHeight(map.properties.textureHeight * game->GetDisplayConfig().tileScaleY);

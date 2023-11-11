@@ -84,6 +84,7 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
 
 MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game) {
     MapProperties mapProperties;
+    MathParser& mathParser = game->GetMathParser();
 
     for (int mapPropertyIndex = 0; mapPropertyIndex < (int) MapPropertyID::TotalNumMapPropertyIDs; ++mapPropertyIndex) {
         MapPropertyID keyID((MapPropertyID) mapPropertyIndex);
@@ -105,9 +106,11 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
                     break;
                 case MapPropertyID::TextureWidth:
                     mapProperties.textureWidth = findKey->get<int>();
+                    mathParser.RegisterVariable(MapPropertyNames.at((int)MapPropertyID::TextureWidth), mapProperties.textureWidth);
                     break;
                 case MapPropertyID::TextureHeight:
                     mapProperties.textureHeight = findKey->get<int>();
+                    mathParser.RegisterVariable(MapPropertyNames.at((int)MapPropertyID::TextureHeight), mapProperties.textureHeight);
                     break;
                 case MapPropertyID::TerrainProperties: {
                     auto terrainJSON = *findKey;
@@ -182,10 +185,6 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
             } // switch(keyID)
         } // if(findKey)
     } // for(mapPropertyIndex)
-
-    MathParser& mathParser = game->GetMathParser();
-    mathParser.RegisterVariable(MapPropertyNames.at((int)MapPropertyID::TextureWidth), mapProperties.textureWidth);
-    mathParser.RegisterVariable(MapPropertyNames.at((int)MapPropertyID::TextureHeight), mapProperties.textureHeight);
 
     return mapProperties;
 }

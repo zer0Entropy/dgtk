@@ -383,10 +383,14 @@ int MathParser::FindOperator(std::string_view expression, bool excludeParens) {
         OperatorSubset[index] = OperatorSymbols[index+2];
     }
     OperatorID operatorFound;
+    int numOperators = (int)OperatorID::TotalNumOperatorIDs;
+    if(excludeParens) {
+        numOperators -= 2;
+    }
 
     for(int index = 0; index < expression.length(); ++index) {
         char c(expression[index]);
-        for(int operatorIndex = 0; operatorIndex < (int)OperatorID::TotalNumOperatorIDs; ++operatorIndex) {
+        for(int operatorIndex = 0; operatorIndex < numOperators; ++operatorIndex) {
             if(excludeParens) {
                 if(c == OperatorSubset[operatorIndex]) {
                     if(operatorPosition == -1 || (int)operatorFound > operatorIndex){
