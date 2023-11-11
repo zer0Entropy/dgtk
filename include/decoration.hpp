@@ -11,6 +11,8 @@
 enum class DecorationPropertyID {
     ObjectID = 0,
     DecorationType,
+    FrameWidth,
+    FrameHeight,
     FontID,
     FontPath,
     FontSize,
@@ -24,6 +26,8 @@ enum class DecorationPropertyID {
 const std::vector<std::string> DecorationPropertyNames{
         {"object_id"},
         {"decoration_type"},
+        {"frame_width"},
+        {"frame_height"},
         {"font_id"},
         {"font_path"},
         {"font_size"},
@@ -43,6 +47,8 @@ enum class DecorationType {
 struct DecorationProperties {
     UniqueID            id;
     DecorationType      decType;
+    int                 frameWidth;
+    int                 frameHeight;
     UniqueID            fontID;
     std::string         fontPath;
     int                 fontSize;
@@ -78,7 +84,7 @@ static std::vector<std::string> FrameSegmentNames{
 
 class LogSystem;
 
-DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& jsonDoc);
+DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);
 nlohmann::json WriteDecorationPropertiesToJSON(const DecorationProperties& decProperties);
 
 #endif //DGTKPROJECT_DECORATION_HPP

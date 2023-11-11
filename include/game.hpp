@@ -57,6 +57,7 @@ public:
     bool                MoveCreature(Creature* creature, MapLocation location);
 
     Decoration*         CreateFrameSegment(Decoration* frame, FrameSegmentID segmentID);
+    Decoration*         CreateFrame(const uiObjectProperties& uiObjProperties, const DecorationProperties& decProperties);
     Decoration*         CreateDecoration(const uiObjectProperties& uiObjProperties, const DecorationProperties& decProperties);
 
     void                SignalInterrupt();

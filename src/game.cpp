@@ -51,7 +51,8 @@ void Game::Init() {
         systems[systemIndex]->Init();
     }
     mathParser.RegisterVariable("window_width", displayConfig.windowProperties.width);
-    mathParser.RegisterVariable("window_height", displayConfig.windowProperties.height);// - displayConfig.windowHeightModifier);
+    mathParser.RegisterVariable("window_height", displayConfig.windowProperties.height);
+    mathParser.RegisterVariable("frame_height_modifier", displayConfig.windowHeightModifier);
 }
 
 void Game::Update() {
@@ -426,15 +427,109 @@ Decoration* Game::CreateFrameSegment(Decoration* frame, FrameSegmentID segmentID
     return frameSegment;
 }
 
+Decoration* Game::CreateFrame(const uiObjectProperties& uiObjProperties, const DecorationProperties& decProperties) {
+    Decoration* frame(new Decoration(decProperties.id, decProperties.decType));
+    frame->uiProperties = uiObjProperties;
+    frame->decProperties = decProperties;
+    int segmentCount(0), rowCount(0), columnCount(0);
+
+    sf::Vector2i textureSize{ (int)(uiObjProperties.textureSource.width * displayConfig.uiScaleX),
+                              (int)(uiObjProperties.textureSource.height * displayConfig.uiScaleY) };
+
+    Position position(uiObjProperties.position);
+    int width(decProperties.frameWidth);
+    int height(decProperties.frameHeight);
+
+    for(int segmentIndex = 0; segmentIndex < (int)FrameSegmentID::TotalNumFrameSegmentIDs; ++segmentIndex) {
+        std::string segmentID(decProperties.id);
+        int stepX(0), stepY(0);
+        segmentID.append(FrameSegmentNames.at(segmentIndex));
+
+        if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopLeft) {
+            position = uiObjProperties.position;
+            segmentCount = 1;
+        } else if((FrameSegmentID) segmentIndex == FrameSegmentID::TopRight) {
+            position = {
+                    uiObjProperties.position.x + width - textureSize.x,
+                    uiObjProperties.position.y
+            };
+            segmentCount = 1;
+        } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomLeft) {
+            position = {
+                    uiObjProperties.position.x,
+                    uiObjProperties.position.y + height - textureSize.y
+            };
+            segmentCount = 1;
+        } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomRight) {
+            position = {
+                    uiObjProperties.position.x + width - textureSize.x,
+                    uiObjProperties.position.y + height - textureSize.y
+            };
+            segmentCount = 1;
+        } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopMid) {
+            position = {
+                    uiObjProperties.position.x + textureSize.x,
+                    uiObjProperties.position.y
+            };
+            segmentCount = (width - (2 * textureSize.x)) / textureSize.x;
+            stepX = 1;
+        } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomMid) {
+            position = {
+                    uiObjProperties.position.x + textureSize.x,
+                    uiObjProperties.position.y + height - textureSize.y
+            };
+            segmentCount = (width - (2 * textureSize.x)) / textureSize.x;
+            stepX = 1;
+        } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::MidLeft) {
+            position = {
+                    uiObjProperties.position.x,
+                    uiObjProperties.position.y + textureSize.y
+            };
+            segmentCount = (height - (2 * textureSize.y)) / textureSize.y;
+            stepY = 1;
+        } else if((FrameSegmentID) segmentIndex == FrameSegmentID::MidRight) {
+            position = {
+                    uiObjProperties.position.x + width - textureSize.x,
+                    uiObjProperties.position.y + textureSize.y
+            };
+            segmentCount = (height - (2 * textureSize.y)) / textureSize.y;
+            stepY = 1;
+        } else if((FrameSegmentID) segmentIndex == FrameSegmentID::Middle) {
+            position = {
+                    uiObjProperties.position.x + textureSize.x,
+                    uiObjProperties.position.y + textureSize.y
+            };
+            rowCount = (height - (2 * textureSize.y)) / textureSize.y;
+            columnCount = (width - (2 * textureSize.x)) / textureSize.x;
+            segmentCount = rowCount * columnCount;
+            stepX = 1;
+            stepY = 1;
+        }
+        for (int s = 0; s < segmentCount; ++s) {
+            Decoration* segment = CreateFrameSegment(frame, (FrameSegmentID) segmentIndex);
+            segment->sprite->setPosition(position.x, position.y);
+            position.x += (stepX * textureSize.x);
+            if((FrameSegmentID)segmentIndex == FrameSegmentID::Middle) {
+                if(position.x > columnCount * textureSize.x) {
+                    position.x = uiObjProperties.position.x + textureSize.x;
+                    position.y += (stepY * textureSize.y);
+                }
+            } else {
+                position.y += (stepY * textureSize.y);
+            }
+            frame->children.push_back(std::unique_ptr<uiObject>(std::move(segment)));
+        }
+    }
+    return frame;
+}
+
 Decoration* Game::CreateDecoration(const uiObjectProperties& uiObjProperties, const DecorationProperties& decProperties) {
     Decoration* decoration(nullptr);
     ResourceSystem* resourceSystem(GetResourceSystem());
     bool success(true);
 
-    sf::Vector2u windowSize{ (unsigned int)displayConfig.windowProperties.width,
-                             (unsigned int)displayConfig.windowProperties.height };// - displayConfig.windowHeightModifier };
-    sf::Vector2u textureSize{ (unsigned int)(uiObjProperties.textureSource.width * displayConfig.uiScaleX),
-                              (unsigned int)(uiObjProperties.textureSource.height * displayConfig.uiScaleY) };
+    sf::Vector2i windowSize{ displayConfig.windowProperties.width,
+                             displayConfig.windowProperties.height - displayConfig.windowHeightModifier };
 
     switch(decProperties.decType) {
         case DecorationType::Background:
@@ -442,6 +537,8 @@ Decoration* Game::CreateDecoration(const uiObjectProperties& uiObjProperties, co
         case DecorationType::Doodad:
             break;
         case DecorationType::Frame:
+            decoration = CreateFrame(uiObjProperties, decProperties);
+            return decoration;
             break;
         case DecorationType::Text:
             break;
@@ -464,89 +561,8 @@ Decoration* Game::CreateDecoration(const uiObjectProperties& uiObjProperties, co
             case DecorationType::Doodad:
                 decoration->sprite = std::unique_ptr<sf::Sprite>(new sf::Sprite);
                 break;
-            case DecorationType::Frame: {
-                int segmentCount(0), rowCount(0), columnCount(0);
-                Position position(decoration->uiProperties.position);
-                for(int segmentIndex = 0; segmentIndex < (int)FrameSegmentID::TotalNumFrameSegmentIDs; ++segmentIndex) {
-                    std::string segmentID(decoration->decProperties.id);
-                    int stepX(0), stepY(0);
-                    segmentID.append(FrameSegmentNames.at(segmentIndex));
-                    if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopLeft) {
-                        position = uiObjProperties.position;
-                        segmentCount = 1;
-                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::TopRight) {
-                        position = {
-                                (int)(windowSize.x - textureSize.x),
-                                uiObjProperties.position.y
-                        };
-                        segmentCount = 1;
-                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomLeft) {
-                        position = {
-                                uiObjProperties.position.x,
-                                (int)(windowSize.y - textureSize.y)
-                        };
-                        segmentCount = 1;
-                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomRight) {
-                        position = {
-                                (int)(windowSize.x - textureSize.x),
-                                (int)(windowSize.y - textureSize.y)
-                        };
-                        segmentCount = 1;
-                    } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopMid) {
-                        position = {
-                                (int) (uiObjProperties.position.x + textureSize.x),
-                                uiObjProperties.position.y
-                        };
-                        segmentCount = ((int) windowSize.x / (int) textureSize.x) - 2;
-                        stepX = 1;
-                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomMid) {
-                        position = {
-                                (int)(uiObjProperties.position.x + textureSize.x),
-                                (int)(windowSize.y - textureSize.y)
-                        };
-                        segmentCount = ((int) windowSize.x / (int) textureSize.x) - 2;
-                        stepX = 1;
-                    } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::MidLeft) {
-                        position = {
-                                uiObjProperties.position.x,
-                                (int) (uiObjProperties.position.y + textureSize.y)
-                        };
-                        segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
-                        stepY = 1;
-                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::MidRight) {
-                        position = {
-                                (int)(windowSize.x - textureSize.x),
-                                (int)(uiObjProperties.position.y + textureSize.y)
-                        };
-                        segmentCount = ((int)windowSize.y / (int)textureSize.y) - 2;
-                        stepY = 1;
-                    } else if((FrameSegmentID) segmentIndex == FrameSegmentID::Middle) {
-                        position = {
-                                (int)(decoration->uiProperties.position.x + textureSize.x),
-                                (int)(decoration->uiProperties.position.y + textureSize.y)
-                        };
-                        rowCount = (((int)windowSize.y) / (int)textureSize.y) - 2;
-                        columnCount = ((int)windowSize.x / (int)textureSize.x) - 2;
-                        segmentCount = rowCount * columnCount;
-                        stepX = 1;
-                        stepY = 1;
-                    }
-                    for (int s = 0; s < segmentCount; ++s) {
-                        Decoration* segment = CreateFrameSegment(decoration, (FrameSegmentID) segmentIndex);
-                        segment->sprite->setPosition(position.x, position.y);
-                        position.x += (stepX * textureSize.x);
-                        if((FrameSegmentID)segmentIndex == FrameSegmentID::Middle) {
-                            if(position.x > columnCount * textureSize.x) {
-                                position.x = (int)(decoration->uiProperties.position.x + textureSize.x);
-                                position.y += (stepY * textureSize.y);
-                            }
-                        } else {
-                            position.y += (stepY * textureSize.y);
-                        }
-                        decoration->children.push_back(std::unique_ptr<uiObject>(std::move(segment)));
-                    }
-                }
-                break; }
+            case DecorationType::Frame:
+                break;
             case DecorationType::Text:
                 decoration->text = std::unique_ptr<sf::Text>(new sf::Text);
                 if(!decoration->font) {

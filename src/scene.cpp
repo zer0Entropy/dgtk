@@ -41,14 +41,13 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                             // {propertyListName: decoration_properties propertyList: [dec_properties]}
                             if (propertyListName.compare(
                                     ScenePropertyNames[(int) ScenePropertyID::DecorationProperties]) == 0) {
-                                decProperties = ReadDecorationPropertiesFromJSON(propertyList);
+                                decProperties = ReadDecorationPropertiesFromJSON(propertyList, game);
                             }
 
                                 // {propertyListName: ui_object_properties propertyList: [ui_obj_properties]}
                             else if (propertyListName.compare(
                                     ScenePropertyNames[(int) ScenePropertyID::uiObjectProperties]) == 0) {
-                                uiObjProperties = ReadUIObjPropertiesFromJSON(propertyList,
-                                                                                                 game->GetMathParser());
+                                uiObjProperties = ReadUIObjPropertiesFromJSON(propertyList,game->GetMathParser());
                             }
 
                             if(decProperties.id.length() > 0 && decProperties.id == uiObjProperties.id) {

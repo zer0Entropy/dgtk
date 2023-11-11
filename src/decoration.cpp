@@ -3,9 +3,12 @@
 //
 #include "../include/decoration.hpp"
 #include "../include/log.hpp"
+#include "../include/game.hpp"
+#include "../include/math.hpp"
 
-DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& jsonDoc) {
+DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game) {
     DecorationProperties decProperties;
+    MathParser& mathParser = game->GetMathParser();
 
     for(auto decProperty = jsonDoc.begin(); decProperty != jsonDoc.end(); ++decProperty) {
         std::string_view key( decProperty.key() );
@@ -23,6 +26,24 @@ DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& json
                 decProperties.decType = DecorationType::Doodad;
             } else if(decTypeString.compare("text") == 0) {
                 decProperties.decType = DecorationType::Text;
+            }
+        } else if(key.compare(DecorationPropertyNames.at((int)DecorationPropertyID::FrameWidth)) == 0) {
+            if(value.is_string()) {
+                Expression mathExpression;
+                mathExpression.text = value.get<std::string>();
+                int result = mathParser.EvaluateExpression(mathExpression);
+                decProperties.frameWidth = result;
+            } else {
+                decProperties.frameWidth = value.get<int>();
+            }
+        } else if(key.compare(DecorationPropertyNames.at((int)DecorationPropertyID::FrameHeight)) == 0) {
+            if(value.is_string()) {
+                Expression mathExpression;
+                mathExpression.text = value.get<std::string>();
+                int result = mathParser.EvaluateExpression(mathExpression);
+                decProperties.frameHeight = result;
+            } else {
+                decProperties.frameHeight = value.get<int>();
             }
         } else if(key.compare(DecorationPropertyNames.at((int)DecorationPropertyID::FontID)) == 0) {
             decProperties.fontID = value.get<std::string>();
