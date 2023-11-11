@@ -9,6 +9,7 @@
 #include "resource.hpp"
 #include "math.hpp"
 #include "layer.hpp"
+#include "action.hpp"
 
 #ifndef DGTKPROJECT_UI_HPP
 #define DGTKPROJECT_UI_HPP
@@ -24,9 +25,6 @@ enum class uiPropertyID {
         TexturePosition,
         TextureWidth,
         TextureHeight,
-        ActionType,
-        ActionTrigger,
-        TransitionToScene,
         TotalNumUIPropertyIDs
 };
 
@@ -40,10 +38,7 @@ const std::vector<std::string> uiPropertyNames{
         {"texture_path"},
         {"texture_position"},
         {"texture_width"},
-        {"texture_height"},
-        {"action_type"},
-        {"action_trigger"},
-        {"transition_to_scene"}
+        {"texture_height"}
 };
 
 enum class uiObjectType {
@@ -51,26 +46,6 @@ enum class uiObjectType {
     Toolbar,
     Scrollbar,
     MapView
-};
-
-enum class uiActionType {
-    None,
-    TransitionToScene
-};
-
-enum class uiActionTrigger {
-    None,
-    OnKeyPress
-};
-
-class uiObject;
-
-struct uiAction {
-    uiActionType    type;
-    uiActionTrigger trigger;
-    std::string     resourcePath;
-    UniqueID        actorID;
-    UniqueID        targetID;
 };
 
 struct uiObjectProperties {
@@ -81,15 +56,11 @@ struct uiObjectProperties {
     Position        origin;
     Position        position;
     LayerID         layer;
-    uiActionType    actionType;
-    uiActionTrigger actionTrigger;
-    UniqueID        transitionToScene;
 };
 
 struct uiObject {
     UniqueID                                id;
     uiObjectProperties                      uiProperties;
-    uiAction                                action;
     std::vector<std::unique_ptr<uiObject>>  children;
     std::unique_ptr<sf::Sprite>             sprite;
     std::unique_ptr<sf::Text>               text;

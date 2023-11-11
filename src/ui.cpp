@@ -108,22 +108,6 @@ uiObjectProperties ReadUIObjPropertiesFromJSON(const nlohmann::json& jsonDoc, Ma
             uiObjProperties.textureSource.width = value.get<int>();
         } else if(key.compare(uiPropertyNames.at((int)uiPropertyID::TextureHeight)) == 0) {
             uiObjProperties.textureSource.height = value.get<int>();
-        } else if(key.compare(uiPropertyNames.at((int)uiPropertyID::ActionType)) == 0) {
-            std::string actionTypeString = value.get<std::string>();
-            if(actionTypeString.compare("none") == 0) {
-                uiObjProperties.actionType = uiActionType::None;
-            } else if(actionTypeString.compare("transition_to_scene") == 0) {
-                uiObjProperties.actionType = uiActionType::TransitionToScene;
-            }
-        }  else if(key.compare(uiPropertyNames.at((int)uiPropertyID::ActionTrigger)) == 0) {
-            std::string actionTriggerString = value.get<std::string>();
-            if(actionTriggerString.compare("none") == 0) {
-                uiObjProperties.actionTrigger = uiActionTrigger::None;
-            } else if(actionTriggerString.compare("on_key_press") == 0) {
-                uiObjProperties.actionTrigger = uiActionTrigger::OnKeyPress;
-            }
-        } else if(key.compare(uiPropertyNames.at((int)uiPropertyID::TransitionToScene)) == 0) {
-            uiObjProperties.transitionToScene = value.get<std::string>();
         }
     }
 
@@ -154,11 +138,5 @@ nlohmann::json WriteUIObjPropertiesToJSON(const uiObjectProperties& uiObjPropert
     jsonProperties[uiPropertyNames.at((int)uiPropertyID::TextureWidth)] = uiObjProperties.textureSource.width;
     // textureHeight
     jsonProperties[uiPropertyNames.at((int)uiPropertyID::TextureHeight)] = uiObjProperties.textureSource.height;
-    // actionType
-    jsonProperties[uiPropertyNames.at((int)uiPropertyID::ActionType)] = uiObjProperties.actionType;
-    // actionTrigger
-    jsonProperties[uiPropertyNames.at((int)uiPropertyID::ActionTrigger)] = uiObjProperties.actionTrigger;
-    // resourcePath
-    jsonProperties[uiPropertyNames.at((int)uiPropertyID::TransitionToScene)] = uiObjProperties.transitionToScene;
     return jsonProperties;
 }

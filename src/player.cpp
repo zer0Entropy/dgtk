@@ -13,7 +13,7 @@ PlayerController::PlayerController(Player* playerPtr, Game* gamePtr):
 }
 
 void PlayerController::ReceiveInput(const sf::Event& event) {
-    MapLocation location(player->character->location);
+    MapLocation location(player->character->properties.location);
     Direction moveDirection(Direction::None);
     if(event.type == sf::Event::EventType::KeyPressed) {
         if(event.key.code == sf::Keyboard::Up) {

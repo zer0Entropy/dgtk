@@ -60,8 +60,6 @@ public:
     void                SignalInterrupt();
 
 private:
-    uiObjectProperties FindUIObjProperties(Scene *scene, UniqueID id) const;
-    DecorationProperties FindDecorationProperties(Scene *scene, UniqueID id) const;
 
     bool                FindGameConfig();
 

@@ -126,26 +126,25 @@ void Game::TransitionTo(Scene* scene) {
         currentScene.reset(std::move(scene));
     }
 
-    for(auto decorationIter = scene->properties.decorationProperties.begin();
-            decorationIter != scene->properties.decorationProperties.end(); ++decorationIter) {
-        DecorationProperties    decProperties = *decorationIter;
-        uiObjectProperties uiProperties = FindUIObjProperties(scene, decorationIter->id);
-        Decoration* decoration = CreateDecoration(uiProperties, decProperties);
-        decoration->decProperties = decProperties;
-        decoration->uiProperties = uiProperties;
+    for(auto decorationIter = scene->properties.decorations.begin(); decorationIter != scene->properties.decorations.end(); ++decorationIter) {
+        uiObjectProperties uiObjProperties = decorationIter->first;
+        DecorationProperties decProperties = decorationIter->second;
+        Decoration* decoration = CreateDecoration(uiObjProperties, decProperties);
         scene->uiObjects.push_back(decoration);
-        if(uiProperties.actionType != uiActionType::None &&
-           uiProperties.actionTrigger != uiActionTrigger::None) {
-            switch(uiProperties.actionType) {
-                case uiActionType::TransitionToScene:
-                    scene->keyListeners.insert(std::make_pair(uiProperties.id, new SceneTransition(
-                            uiProperties.actionTrigger,
-                        uiProperties.transitionToScene,
-                                this)));
-                    break;
-                case uiActionType::None:    default:
-                    break;
-            }
+    }
+
+    for(auto actionIter = scene->properties.actions.begin(); actionIter != scene->properties.actions.end(); ++actionIter) {
+        Action action = actionIter->second;
+        ActionType actionType = action.type;
+        switch(actionType) {
+            case ActionType::None:                              break;
+            case ActionType::TransitionToScene: {
+                SceneTransition* sceneTransition = new SceneTransition(action.trigger, action.targetID, this);
+                scene->keyListeners.insert(std::make_pair(action.actorID, sceneTransition));
+                break; }
+            case ActionType::MoveCreature:
+                break;
+            case ActionType::TotalNumActionTypes:   default:    break;
         }
     }
 
@@ -200,7 +199,7 @@ void Game::TransitionTo(Scene* scene) {
 
 bool Game::MoveCreature(Creature* creature, MapLocation location) {
     bool success(false);
-    MapLocation oldLocation(creature->location);
+    MapLocation oldLocation(creature->properties.location);
     Map& map(*currentScene->map);
     Tile& oldTile(map.tileArray[oldLocation.y][oldLocation.x]);
     int mapWidth(map.properties.width);
@@ -211,33 +210,11 @@ bool Game::MoveCreature(Creature* creature, MapLocation location) {
         if(newTile.terrain && newTile.terrain->isWalkable && !newTile.creature) {
             oldTile.creature = nullptr;
             newTile.creature = creature;
-            creature->location = location;
+            creature->properties.location = location;
             success = true;
         }
     } // check if location is valid
     return success;
-}
-
-uiObjectProperties Game::FindUIObjProperties(Scene *scene, UniqueID id) const {
-    uiObjectProperties uiObjProperties;
-    for(auto uiObjIter = scene->properties.uiObjProperties.begin(); uiObjIter != scene->properties.uiObjProperties.end(); ++uiObjIter) {
-        if(uiObjIter->id == id) {
-            uiObjProperties = *uiObjIter;
-            break;
-        }
-    }
-    return uiObjProperties;
-}
-
-DecorationProperties Game::FindDecorationProperties(Scene *scene, UniqueID id) const {
-    DecorationProperties decProperties;
-    for(auto decIter = scene->properties.decorationProperties.begin(); decIter != scene->properties.decorationProperties.end(); ++decIter) {
-        if(decIter->id == id) {
-            decProperties = *decIter;
-            break;
-        }
-    }
-    return decProperties;
 }
 
 bool Game::FindGameConfig() {
@@ -611,9 +588,9 @@ Player* Game::CreatePlayer(std::string name, sf::Texture* texture, MapLocation l
 
 Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocation location, const MapProperties& mapProperties) {
     Creature* creature = new Creature;
-    creature->name = name;
+    creature->properties.name = name;
     creature->texture = texture;
-    creature->location = location;
+    creature->properties.location = location;
     creature->position = { (int)(location.x * mapProperties.textureWidth * displayConfig.tileScaleX),
                            (int)(location.y * mapProperties.textureHeight * displayConfig.tileScaleY) };
     creature->sprite.reset(new sf::Sprite);

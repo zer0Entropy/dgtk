@@ -12,6 +12,9 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
     auto sceneJSON = jsonDoc.begin().value();
     auto findSceneID = sceneJSON.find(ScenePropertyNames.at((int) ScenePropertyID::SceneID));
 
+    LogSystem* logSystem = game->GetLogSystem();
+    std::string message("");
+
     for (auto scenePropertyIter = sceneJSON.begin(); scenePropertyIter != sceneJSON.end(); ++scenePropertyIter) {
 
         for (int sceneKeyIndex = 0; sceneKeyIndex < (int) ScenePropertyID::TotalNumScenePropertyIDs; ++sceneKeyIndex) {
@@ -25,6 +28,10 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                     const nlohmann::json uiObjListJSON = scenePropertyIter.value();
                     for (auto uiObjListIter = uiObjListJSON.begin();
                          uiObjListIter != uiObjListJSON.end(); ++uiObjListIter) {
+
+                        uiObjectProperties uiObjProperties;
+                        DecorationProperties decProperties;
+
                         auto propertyListsJSON = uiObjListIter.value();
                         for (auto propertyListIter = propertyListsJSON.begin();
                              propertyListIter != propertyListsJSON.end(); ++propertyListIter) {
@@ -34,16 +41,19 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                             // {propertyListName: decoration_properties propertyList: [dec_properties]}
                             if (propertyListName.compare(
                                     ScenePropertyNames[(int) ScenePropertyID::DecorationProperties]) == 0) {
-                                DecorationProperties decProperties = ReadDecorationPropertiesFromJSON(propertyList);
-                                sceneProperties.decorationProperties.push_back(decProperties);
+                                decProperties = ReadDecorationPropertiesFromJSON(propertyList);
                             }
 
                                 // {propertyListName: ui_object_properties propertyList: [ui_obj_properties]}
                             else if (propertyListName.compare(
                                     ScenePropertyNames[(int) ScenePropertyID::uiObjectProperties]) == 0) {
-                                uiObjectProperties uiObjProperties = ReadUIObjPropertiesFromJSON(propertyList,
+                                uiObjProperties = ReadUIObjPropertiesFromJSON(propertyList,
                                                                                                  game->GetMathParser());
-                                sceneProperties.uiObjProperties.push_back(uiObjProperties);
+                            }
+
+                            if(decProperties.id.length() > 0 && decProperties.id == uiObjProperties.id) {
+                                sceneProperties.decorations.push_back(std::make_pair(uiObjProperties, decProperties));
+                                decProperties.id = uiObjProperties.id = "";
                             }
 
                         } // for(propertyListIter)
@@ -57,6 +67,14 @@ SceneProperties ReadScenePropertiesFromJSON(const nlohmann::json& jsonDoc, Game*
                     auto mapViewJSON = scenePropertyIter.value();
                     sceneProperties.viewProperties = ReadMapViewPropertiesFromJSON(mapViewJSON, game);
                 }  // else if(keyID == MapView)
+                else if(keyID == ScenePropertyID::Actions) {
+                    const nlohmann::json actionListJSON = scenePropertyIter.value();
+                    for (auto actionIter = actionListJSON.begin(); actionIter != actionListJSON.end(); ++actionIter) {
+                        const nlohmann::json actionJSON = actionIter.value();
+                        Action action = ReadActionFromJSON(actionJSON, game);
+                        sceneProperties.actions.insert(std::make_pair(action.id, action));
+                    }
+                } // else if(keyID == Actions)
             } // if(findKey)
         } // for(sceneKeyIndex)
 
@@ -69,7 +87,7 @@ nlohmann::json WriteScenePropertiesToJSON(const SceneProperties& sceneProperties
     return sceneJSON;
 }
 
-SceneTransition::SceneTransition(uiActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr):
+SceneTransition::SceneTransition(ActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr):
     InputListener(gamePtr), trigger(triggerType), sceneID(transitionSceneID), game(gamePtr) {
 
 }
@@ -78,7 +96,7 @@ void SceneTransition::ReceiveInput(const sf::Event& event) {
     Scene* scene(nullptr);
     ResourceSystem* resourceSystem(game->GetResourceSystem());
 
-    if(trigger == uiActionTrigger::OnKeyPress) {
+    if(trigger == ActionTrigger::OnKeyPress) {
 
         if (event.type == sf::Event::EventType::KeyPressed) {
             std::string path = resourceSystem->GetScenePath(sceneID);

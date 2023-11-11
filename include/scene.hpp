@@ -22,6 +22,7 @@ enum class ScenePropertyID {
     uiObjects,
     uiObjectProperties,
     DecorationProperties,
+    Actions,
     Map,
     MapView,
     TotalNumScenePropertyIDs
@@ -32,16 +33,17 @@ const std::vector<std::string> ScenePropertyNames{
         {"ui_objects"},
         {"ui_object_properties"},
         {"decoration_properties"},
+        {"actions"},
         {"map_properties"},
         {"map_view_properties"}
 };
 
 struct SceneProperties {
     UniqueID            id;
-    std::vector<uiObjectProperties>             uiObjProperties;
-    std::vector<DecorationProperties>           decorationProperties;
+    std::vector<std::pair<uiObjectProperties,DecorationProperties>> decorations;
     MapProperties                               mapProperties;
     MapViewProperties                           viewProperties;
+    std::map<UniqueID, Action>                  actions;
 };
 
 struct Scene {
@@ -61,12 +63,12 @@ nlohmann::json WriteScenePropertiesToJSON(const SceneProperties& sceneProperties
 
 class SceneTransition: public InputListener {
 public:
-    SceneTransition(uiActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr);
+    SceneTransition(ActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr);
     SceneTransition(const SceneTransition& copy) = default;
     ~SceneTransition() = default;
     void ReceiveInput(const sf::Event& event) override;
 private:
-    uiActionTrigger trigger;
+    ActionTrigger trigger;
     UniqueID sceneID;
     Game* game;
 };
