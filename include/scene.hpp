@@ -53,6 +53,7 @@ struct Scene {
     std::map<UniqueID, InputListener*>          keyListeners;
     std::unique_ptr<Map>                        map;
     MapView*                                    mapView;
+    std::unique_ptr<Player>                     player;
     Scene();
     Scene(const Scene& copy) = default;
     ~Scene() = default;

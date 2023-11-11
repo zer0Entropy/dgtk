@@ -191,6 +191,7 @@ void Game::TransitionTo(Scene* scene) {
         Player* player = CreatePlayer(playerName, playerTexture, playerLocation, map.properties);
         (map.tileArray[playerLocation.y][playerLocation.x]).creature = player->character.get();
         scene->creatures.push_back(player->character.get());
+        scene->player.reset(std::move(player));
 
         scene->mapView = new MapView;
         scene->mapView->properties = scene->properties.viewProperties;
@@ -227,6 +228,9 @@ bool Game::MoveCreature(Creature* creature, MapLocation location) {
             success = true;
         }
     } // check if location is valid
+    if(success && creature->properties.name.compare(currentScene->player->character->properties.name) == 0) {
+        CenterViewOnPlayer(*currentScene->mapView, *currentScene->map.get(), creature->properties.location);
+    }
     return success;
 }
 
