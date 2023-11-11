@@ -45,17 +45,17 @@ MapViewProperties ReadMapViewPropertiesFromJSON(const nlohmann::json& mapViewJSO
                 int result = mathParser.EvaluateExpression(mathExpression);
                 viewProperties.position.x = result;
             } else {
-                viewProperties.position.x = findWidth->get<int>();
+                viewProperties.position.x = findX->get<int>();
             }
         }
         if(findY != positionJSON.end()) {
-            if(findX->is_string()) {
+            if(findY->is_string()) {
                 Expression mathExpression;
                 mathExpression.text = findY->get<std::string>();
                 int result = mathParser.EvaluateExpression(mathExpression);
                 viewProperties.position.y = result;
             } else {
-                viewProperties.position.y = findHeight->get<int>();
+                viewProperties.position.y = findY->get<int>();
             }
         }
     }

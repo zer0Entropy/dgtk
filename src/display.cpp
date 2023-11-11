@@ -118,8 +118,8 @@ void DisplaySystem::DrawView(const MapView& view, const Map& map) {
         top = viewProperties.centerLocation.y - (viewProperties.heightInTiles / 2);
     }
 
-    int offsetX = viewProperties.position.x;
-    int offsetY = viewProperties.position.y;
+    //int offsetX = viewProperties.position.x;
+    //int offsetY = viewProperties.position.y;
 
     int tileWidth(map.properties.textureWidth * game->GetDisplayConfig().tileScaleX);
     int tileHeight(map.properties.textureHeight * game->GetDisplayConfig().tileScaleY);
@@ -128,10 +128,10 @@ void DisplaySystem::DrawView(const MapView& view, const Map& map) {
             const Tile& tile(map.tileArray[y][x]);
             sf::Sprite* sprite(tile.sprite.get());
             if(sprite != nullptr) {
-                sprite->setPosition((x - left) * tileWidth + offsetX, (y - top) * tileHeight + offsetY);
+                sprite->setPosition((x - left) * tileWidth, (y - top) * tileHeight);
                 window->draw(*tile.sprite);
                 if (tile.creature) {
-                    tile.creature->sprite->setPosition((x - left) * tileWidth + offsetX, (y - top) * tileHeight + offsetY);
+                    tile.creature->sprite->setPosition((x - left) * tileWidth, (y - top) * tileHeight);
                     window->draw(*tile.creature->sprite);
                 }
             }
