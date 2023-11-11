@@ -7,6 +7,7 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <nlohmann/json.hpp>
 #include "id.hpp"
+#include "location.hpp"
 
 #ifndef DGTKPROJECT_ACTION_HPP
 #define DGTKPROJECT_ACTION_HPP
@@ -51,6 +52,8 @@ struct Action {
     std::string     resourcePath;
     UniqueID        actorID;
     UniqueID        targetID;
+    Direction       targetDirection;
+    MapLocation     targetLocation;
 };
 
 class Game;

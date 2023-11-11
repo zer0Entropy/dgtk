@@ -86,7 +86,7 @@ nlohmann::json WriteScenePropertiesToJSON(const SceneProperties& sceneProperties
     nlohmann::json sceneJSON;
     return sceneJSON;
 }
-
+/*
 SceneTransition::SceneTransition(ActionTrigger triggerType, UniqueID transitionSceneID, Game* gamePtr):
     InputListener(gamePtr), trigger(triggerType), sceneID(transitionSceneID), game(gamePtr) {
 
@@ -109,7 +109,7 @@ void SceneTransition::ReceiveInput(const sf::Event& event) {
         game->TransitionTo(scene);
     }
 }
-
+*/
 Scene::Scene() {
     properties.id = "";
     properties.mapProperties.name = "";

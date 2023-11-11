@@ -14,14 +14,7 @@ Action ReadActionFromJSON(const nlohmann::json& actionJSON, Game *game) {
     auto findTriggerKey = actionJSON.find("trigger_key");
     auto findActorID = actionJSON.find("actor_id");
     auto findTargetID = actionJSON.find("target_id");
-
-    LogSystem* logSystem = game->GetLogSystem();
-    std::string message("");
-
-    message = "actionJSON: ";
-    message.append(actionJSON.dump());
-    logSystem->PublishMessage(message);
-    logSystem->Update();
+    auto findTargetDirection = actionJSON.find("target_direction");
 
     if(findID != actionJSON.end()) {
         action.id = findID->get<std::string>();
@@ -56,6 +49,41 @@ Action ReadActionFromJSON(const nlohmann::json& actionJSON, Game *game) {
     }
     if(findTargetID != actionJSON.end()) {
         action.targetID = findTargetID->get<std::string>();
+    }
+    if(findTargetDirection != actionJSON.end()) {
+        std::string directionString = findTargetDirection->get<std::string>();
+        action.targetDirection = Direction::None;
+        if(directionString.compare("up") == 0) {
+            action.targetDirection = Direction::Up;
+        } else if(directionString.compare("down") == 0) {
+            action.targetDirection = Direction::Down;
+        } else if(directionString.compare("left") == 0) {
+            action.targetDirection = Direction::Left;
+        } else if(directionString.compare("right") == 0) {
+            action.targetDirection = Direction::Right;
+        }
+        if(action.targetDirection != Direction::None) {
+            Creature* actor = game->FindCreature(action.actorID);
+            MapLocation origin = actor->properties.location;
+            MapLocation destination(origin);
+            switch(action.targetDirection) {
+                case Direction::None:   break;
+                case Direction::Up:
+                    destination.y--;
+                    break;
+                case Direction::Down:
+                    destination.y++;
+                    break;
+                case Direction::Left:
+                    destination.x--;
+                    break;
+                case Direction::Right:
+                    destination.x++;
+                    break;
+                case Direction::TotalNumCardinalDirections:     default:    break;
+            }
+            action.targetLocation = destination;
+        }
     }
 
     return action;

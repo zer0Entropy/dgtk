@@ -139,8 +139,10 @@ void Game::TransitionTo(Scene* scene) {
         switch(actionType) {
             case ActionType::None:                              break;
             case ActionType::TransitionToScene: {
-                SceneTransition* sceneTransition = new SceneTransition(action.trigger, action.targetID, this);
-                scene->keyListeners.insert(std::make_pair(action.actorID, sceneTransition));
+                KeyPressListener* keyListener = new KeyPressListener(this);
+                scene->keyListeners.insert(std::make_pair(action.actorID, keyListener));
+                //SceneTransition* sceneTransition = new SceneTransition(action.trigger, action.targetID, this);
+                //scene->keyListeners.insert(std::make_pair(action.actorID, sceneTransition));
                 break; }
             case ActionType::MoveCreature:
                 break;
@@ -195,6 +197,16 @@ void Game::TransitionTo(Scene* scene) {
         scene->mapView->properties.heightInTiles = scene->mapView->properties.heightInPixels / (textureHeight * displayConfig.tileScaleY);
         CenterViewOnPlayer(*scene->mapView, *scene->map.get(), playerLocation);
     }
+}
+
+Creature* Game::FindCreature(UniqueID id) {
+    Creature* creature(nullptr);
+    for(auto creatureIter = currentScene->creatures.begin(); !creature && creatureIter != currentScene->creatures.end(); ++creatureIter) {
+        if((*creatureIter)->properties.name == id) {
+            creature = (*creatureIter);
+        }
+    }
+    return creature;
 }
 
 bool Game::MoveCreature(Creature* creature, MapLocation location) {
@@ -599,3 +611,4 @@ Creature* Game::CreateCreature(std::string name, sf::Texture* texture, MapLocati
     creature->sprite->setPosition(creature->position.x, creature->position.y);
     return creature;
 }
+

@@ -2,6 +2,8 @@
 // Created by zeroc00l on 10/31/23.
 //
 
+#include <map>
+#include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/Window.hpp>
 #include "../include/display.hpp"
 
@@ -26,6 +28,23 @@ public:
     virtual void ReceiveInput(const sf::Event& event) = 0;
 protected:
     Game* game;
+};
+
+struct Action;
+
+class KeyPressListener: public InputListener {
+public:
+    KeyPressListener(Game* gamePtr);
+    KeyPressListener(const KeyPressListener& copy) = default;
+    ~KeyPressListener() = default;
+
+    void    ReceiveInput(const sf::Event& event);
+    void    AddKeyMapping(sf::Keyboard::Key keyPress, Action action);
+    void    RemoveKeyMapping(sf::Keyboard::Key keyPress);
+    void    ChangeKeyMapping(sf::Keyboard::Key keyPress, Action action);
+    Action* GetAction(sf::Keyboard::Key keyPress) const;
+protected:
+    std::map<sf::Keyboard::Key, Action> keyMap;
 };
 
 class InputSystem: public System {

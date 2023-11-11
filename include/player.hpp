@@ -17,7 +17,7 @@ struct Player {
 };
 
 class Game;
-
+/*
 class PlayerController: public InputListener {
 public:
     PlayerController(Player* playerPtr, Game* gamePtr);
@@ -29,5 +29,5 @@ private:
     Player* player;
     Game* game;
 };
-
+*/
 #endif //DGTKPROJECT_PLAYER_HPP

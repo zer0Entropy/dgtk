@@ -52,6 +52,8 @@ public:
 
     void                TransitionTo(Scene* scene);
 
+    Creature*           FindCreature(UniqueID id);
+
     bool                MoveCreature(Creature* creature, MapLocation location);
 
     Decoration*         CreateFrameSegment(Decoration* frame, FrameSegmentID segmentID);

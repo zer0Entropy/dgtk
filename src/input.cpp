@@ -4,6 +4,65 @@
 
 #include <SFML/Window/Event.hpp>
 #include "../include/input.hpp"
+#include "../include/action.hpp"
+#include "../include/game.hpp"
+
+KeyPressListener::KeyPressListener(Game* gamePtr) : InputListener(gamePtr) {
+
+}
+
+void KeyPressListener::ReceiveInput(const sf::Event& event) {
+    ResourceSystem* resourceSystem = game->GetResourceSystem();
+
+    if(event.type == sf::Event::KeyPressed) {
+        sf::Keyboard::Key keyPressed = event.key.code;
+        Action *action = GetAction(keyPressed);
+        if(action) {
+            switch(action->type) {
+                case ActionType::None:                                  break;
+                case ActionType::TransitionToScene: {
+                    UniqueID sceneID = action->targetID;
+                    std::string path = resourceSystem->GetScenePath(sceneID);
+                    Scene* scene = resourceSystem->LoadScene(path, *game);
+                    game->TransitionTo(scene);
+                    break; }
+                case ActionType::MoveCreature: {
+                    UniqueID actorID = action->actorID;
+                    Creature* creaturePtr = game->FindCreature(actorID);
+                    game->MoveCreature(creaturePtr, action->targetLocation);
+                    break; }
+                case ActionType::TotalNumActionTypes:       default:    break;
+            }
+        }
+    }
+}
+
+void KeyPressListener::AddKeyMapping(sf::Keyboard::Key keyPress, Action action) {
+    keyMap.insert(std::make_pair(keyPress, action));
+}
+
+void KeyPressListener::RemoveKeyMapping(sf::Keyboard::Key keyPress) {
+    auto keyMapIter = keyMap.find(keyPress);
+    if(keyMapIter != keyMap.end()) {
+        keyMap.erase(keyMapIter);
+    }
+}
+
+void KeyPressListener::ChangeKeyMapping(sf::Keyboard::Key keyPress, Action action) {
+    auto keyMapIter = keyMap.find(keyPress);
+    if(keyMapIter != keyMap.end()) {
+        keyMapIter->second = action;
+    }
+}
+
+Action* KeyPressListener::GetAction(sf::Keyboard::Key keyPress) const {
+    Action* actionPtr(nullptr);
+    auto keyMapIter = keyMap.find(keyPress);
+    if(keyMapIter != keyMap.end()) {
+        actionPtr = (Action*)&(keyMapIter->second);
+    }
+    return actionPtr;
+}
 
 InputSystem::InputSystem(DisplaySystem* displaySysPtr): System(SystemID::Input), displaySystem(displaySysPtr) {
 }
