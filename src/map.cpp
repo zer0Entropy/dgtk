@@ -137,7 +137,7 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
                         }
                     }
                     if (findNorthEdge != tilePlacementJSON.end()) {
-                        std::string terrainTypeString = findDefault->get<std::string>();
+                        std::string terrainTypeString = findNorthEdge->get<std::string>();
                         if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
                             mapProperties.strategy.edges[(int) Direction::Up] = TerrainType::Empty;
                         } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
@@ -147,7 +147,7 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
                         }
                     }
                     if (findSouthEdge != tilePlacementJSON.end()) {
-                        std::string terrainTypeString = findDefault->get<std::string>();
+                        std::string terrainTypeString = findSouthEdge->get<std::string>();
                         if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
                             mapProperties.strategy.edges[(int) Direction::Down] = TerrainType::Empty;
                         } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
@@ -157,7 +157,7 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
                         }
                     }
                     if (findWestEdge != tilePlacementJSON.end()) {
-                        std::string terrainTypeString = findDefault->get<std::string>();
+                        std::string terrainTypeString = findWestEdge->get<std::string>();
                         if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
                             mapProperties.strategy.edges[(int) Direction::Left] = TerrainType::Empty;
                         } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
@@ -167,7 +167,7 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
                         }
                     }
                     if (findEastEdge != tilePlacementJSON.end()) {
-                        std::string terrainTypeString = findDefault->get<std::string>();
+                        std::string terrainTypeString = findEastEdge->get<std::string>();
                         if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Empty)) == 0) {
                             mapProperties.strategy.edges[(int) Direction::Right] = TerrainType::Empty;
                         } else if (terrainTypeString.compare(TerrainTypeNames.at((int) TerrainType::Floor)) == 0) {
