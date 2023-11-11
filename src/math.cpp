@@ -5,7 +5,12 @@
 #include "../include/math.hpp"
 
 void MathParser::RegisterVariable(std::string_view key, int value) {
-    variables.insert(std::make_pair(std::string{key},value));
+    auto findVariable(variables.find(std::string{key}));
+    if(findVariable != variables.end()) {
+        UpdateValue(key, value);
+    } else {
+        variables.insert(std::make_pair(std::string{key}, value));
+    }
 }
 
 void MathParser::UnregisterVariable(std::string_view key, int value) {

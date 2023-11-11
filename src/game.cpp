@@ -437,6 +437,7 @@ Decoration* Game::CreateFrame(const uiObjectProperties& uiObjProperties, const D
                               (int)(uiObjProperties.textureSource.height * displayConfig.uiScaleY) };
 
     Position position(uiObjProperties.position);
+    const Position origin(position);
     int width(decProperties.frameWidth);
     int height(decProperties.frameHeight);
 
@@ -446,58 +447,58 @@ Decoration* Game::CreateFrame(const uiObjectProperties& uiObjProperties, const D
         segmentID.append(FrameSegmentNames.at(segmentIndex));
 
         if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopLeft) {
-            position = uiObjProperties.position;
+            position = origin;
             segmentCount = 1;
         } else if((FrameSegmentID) segmentIndex == FrameSegmentID::TopRight) {
             position = {
-                    uiObjProperties.position.x + width - textureSize.x,
-                    uiObjProperties.position.y
+                    origin.x + width - textureSize.x,
+                        origin.y
             };
             segmentCount = 1;
         } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomLeft) {
             position = {
-                    uiObjProperties.position.x,
-                    uiObjProperties.position.y + height - textureSize.y
+                    origin.x,
+                    origin.y + height - textureSize.y
             };
             segmentCount = 1;
         } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomRight) {
             position = {
-                    uiObjProperties.position.x + width - textureSize.x,
-                    uiObjProperties.position.y + height - textureSize.y
+                    origin.x + width - textureSize.x,
+                    origin.y + height - textureSize.y
             };
             segmentCount = 1;
         } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::TopMid) {
             position = {
-                    uiObjProperties.position.x + textureSize.x,
-                    uiObjProperties.position.y
+                    origin.x + textureSize.x,
+                    origin.y
             };
             segmentCount = (width - (2 * textureSize.x)) / textureSize.x;
             stepX = 1;
         } else if((FrameSegmentID) segmentIndex == FrameSegmentID::BottomMid) {
             position = {
-                    uiObjProperties.position.x + textureSize.x,
-                    uiObjProperties.position.y + height - textureSize.y
+                    origin.x + textureSize.x,
+                    origin.y + height - textureSize.y
             };
             segmentCount = (width - (2 * textureSize.x)) / textureSize.x;
             stepX = 1;
         } else if ((FrameSegmentID) segmentIndex == FrameSegmentID::MidLeft) {
             position = {
-                    uiObjProperties.position.x,
-                    uiObjProperties.position.y + textureSize.y
+                    origin.x,
+                    origin.y + textureSize.y
             };
             segmentCount = (height - (2 * textureSize.y)) / textureSize.y;
             stepY = 1;
         } else if((FrameSegmentID) segmentIndex == FrameSegmentID::MidRight) {
             position = {
-                    uiObjProperties.position.x + width - textureSize.x,
-                    uiObjProperties.position.y + textureSize.y
+                    origin.x + width - textureSize.x,
+                    origin.y + textureSize.y
             };
             segmentCount = (height - (2 * textureSize.y)) / textureSize.y;
             stepY = 1;
         } else if((FrameSegmentID) segmentIndex == FrameSegmentID::Middle) {
             position = {
-                    uiObjProperties.position.x + textureSize.x,
-                    uiObjProperties.position.y + textureSize.y
+                    origin.x + textureSize.x,
+                    origin.y + textureSize.y
             };
             rowCount = (height - (2 * textureSize.y)) / textureSize.y;
             columnCount = (width - (2 * textureSize.x)) / textureSize.x;
@@ -510,8 +511,8 @@ Decoration* Game::CreateFrame(const uiObjectProperties& uiObjProperties, const D
             segment->sprite->setPosition(position.x, position.y);
             position.x += (stepX * textureSize.x);
             if((FrameSegmentID)segmentIndex == FrameSegmentID::Middle) {
-                if(position.x > columnCount * textureSize.x) {
-                    position.x = uiObjProperties.position.x + textureSize.x;
+                if(position.x - origin.x + textureSize.x >= width) {
+                    position.x = origin.x + textureSize.x;
                     position.y += (stepY * textureSize.y);
                 }
             } else {
