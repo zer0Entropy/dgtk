@@ -10,6 +10,7 @@
 #include "decoration.hpp"
 #include "map.hpp"
 #include "player.hpp"
+#include "bsp.hpp"
 
 #ifndef DGTKPROJECT_GAME_HPP
 #define DGTKPROJECT_GAME_HPP
@@ -44,6 +45,7 @@ public:
     const DisplayConfig& GetDisplayConfig() const;
 
     MathParser&         GetMathParser() const;
+    RandomNumberGenerator&  GetRNG() const;
 
     Scene*              GetCurrentScene() const;
 
@@ -86,6 +88,7 @@ private:
     DisplayConfig               displayConfig;
 
     MathParser                  mathParser;
+    RandomNumberGenerator       rng;
 
     static const std::string    configFilename;
 };

@@ -527,3 +527,9 @@ std::string MathParser::GetNextTerm(std::string_view expression, std::size_t pos
     }
     return nextTerm;
 }
+
+int RandomNumberGenerator::GetRandom(int min, int max) {
+    std::uniform_int_distribution<int> distribution(min, max);
+    int randomNumber = distribution(generator);
+    return randomNumber;
+}

@@ -11,6 +11,7 @@
 #include "location.hpp"
 #include "position.hpp"
 #include "display.hpp"
+#include "math.hpp"
 
 #ifndef DGTKPROJECT_MAP_HPP
 #define DGTKPROJECT_MAP_HPP

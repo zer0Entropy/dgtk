@@ -18,7 +18,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable( nlohmann )
 
-add_executable(dgtkProject src/main.cpp include/decoration.hpp include/ui.hpp include/resource.hpp include/id.hpp src/resource.cpp include/display.hpp src/display.cpp include/position.hpp include/input.hpp include/system.hpp src/input.cpp include/log.hpp src/log.cpp include/game.hpp src/game.cpp include/map.hpp include/scene.hpp src/scene.cpp include/player.hpp include/creature.hpp src/player.cpp include/location.hpp include/view.hpp src/view.cpp include/math.hpp src/math.cpp src/map.cpp src/ui.cpp src/decoration.cpp include/layer.hpp include/action.hpp src/action.cpp src/creature.cpp)
+add_executable(dgtkProject src/main.cpp include/decoration.hpp include/ui.hpp include/resource.hpp include/id.hpp src/resource.cpp include/display.hpp src/display.cpp include/position.hpp include/input.hpp include/system.hpp src/input.cpp include/log.hpp src/log.cpp include/game.hpp src/game.cpp include/map.hpp include/scene.hpp src/scene.cpp include/player.hpp include/creature.hpp src/player.cpp include/location.hpp include/view.hpp src/view.cpp include/math.hpp src/math.cpp src/map.cpp src/ui.cpp src/decoration.cpp include/layer.hpp include/action.hpp src/action.cpp src/creature.cpp include/bsp.hpp src/bsp.cpp)
 target_link_libraries(dgtkProject PRIVATE sfml-audio sfml-graphics nlohmann_json::nlohmann_json)
 target_compile_features(dgtkProject PRIVATE cxx_std_17)
 

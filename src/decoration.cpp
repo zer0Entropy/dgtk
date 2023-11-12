@@ -36,6 +36,7 @@ DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& json
             } else {
                 decProperties.frameWidth = value.get<int>();
             }
+            mathParser.RegisterVariable("frame_width", decProperties.frameWidth);
         } else if(key.compare(DecorationPropertyNames.at((int)DecorationPropertyID::FrameHeight)) == 0) {
             if(value.is_string()) {
                 Expression mathExpression;
@@ -45,6 +46,7 @@ DecorationProperties ReadDecorationPropertiesFromJSON(const nlohmann::json& json
             } else {
                 decProperties.frameHeight = value.get<int>();
             }
+            mathParser.RegisterVariable("frame_height", decProperties.frameHeight);
         } else if(key.compare(DecorationPropertyNames.at((int)DecorationPropertyID::FontID)) == 0) {
             decProperties.fontID = value.get<std::string>();
         } else if(key.compare(DecorationPropertyNames.at((int)DecorationPropertyID::FontPath)) == 0) {

@@ -80,9 +80,6 @@ void DisplaySystem::RenderScene(Scene* scene) {
                 if(uiObjPtr->sprite) {
                     currentLayer.push_back(uiObjPtr->sprite.get());
                 }
-                if(uiObjPtr->text) {
-                    currentLayer.push_back(uiObjPtr->text.get());
-                }
                 if(!uiObjPtr->children.empty()) {
                     for(auto& childPtr : uiObjPtr->children) {
                         if(childPtr->sprite) {
@@ -92,6 +89,9 @@ void DisplaySystem::RenderScene(Scene* scene) {
                             currentLayer.push_back(childPtr->text.get());
                         }
                     }
+                }
+                if(uiObjPtr->text) {
+                    currentLayer.push_back(uiObjPtr->text.get());
                 }
             } // if(layer == currentLayer)
         } // for each uiObject

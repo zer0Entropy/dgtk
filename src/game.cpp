@@ -52,7 +52,7 @@ void Game::Init() {
     }
     mathParser.RegisterVariable("window_width", displayConfig.windowProperties.width);
     mathParser.RegisterVariable("window_height", displayConfig.windowProperties.height);
-    mathParser.RegisterVariable("frame_height_modifier", displayConfig.windowHeightModifier);
+    mathParser.RegisterVariable("frame_modifier", displayConfig.windowHeightModifier);
 }
 
 void Game::Update() {
@@ -102,6 +102,10 @@ const DisplayConfig& Game::GetDisplayConfig() const {
 
 MathParser& Game::GetMathParser() const {
     return (MathParser&)mathParser;
+}
+
+RandomNumberGenerator& Game::GetRNG() const {
+    return (RandomNumberGenerator&)rng;
 }
 
 Scene* Game::GetCurrentScene() const {
@@ -164,7 +168,6 @@ void Game::TransitionTo(Scene* scene) {
         inputSystem->AddListener(iterator->second, ListenerType::KeyPressListener);
     } // for each inputListener in Scene
 
-    /* TODO: Create Map, MapView, Player */
     if(!scene->properties.mapProperties.name.empty()) {
         scene->map = std::unique_ptr<Map>(new Map);
         Map& map = *scene->map.get();
@@ -188,6 +191,22 @@ void Game::TransitionTo(Scene* scene) {
                                             scene->map->properties.textureHeight);
             terrain.texture = resourceSystem->GetTexture(TerrainTypeNames.at(terrainIndex));
         }
+
+        BSP::Node* testNode = new BSP::Node(nullptr);
+        testNode->left = 0;
+        testNode->top = 0;
+        testNode->width = scene->map->properties.width;
+        testNode->height = scene->map->properties.height;
+
+        BSP::Tree* testTree = new BSP::Tree(testNode);
+        testTree->SplitLeaves(rng);
+        int nodeCount = testTree->GetNodeCount();
+        auto leafList = testTree->GetLeafList();
+
+        testTree->SplitLeaves(rng);
+        nodeCount = testTree->GetNodeCount();
+        leafList = testTree->GetLeafList();
+
         GenerateMap(scene->map.get(), displayConfig);
 
         UniqueID playerName("Player1");
@@ -580,10 +599,11 @@ Decoration* Game::CreateDecoration(const uiObjectProperties& uiObjProperties, co
                 decoration->text->setString(decProperties.contents);
                 decoration->text->setPosition(decoration->uiProperties.position.x, decoration->uiProperties.position.y);
                 if(uiObjProperties.align == Alignment::Center) {
-                    decoration->text->setPosition(
-                            decoration->uiProperties.position.x - (decoration->text->getLocalBounds().width / 2),
+                    Position centeredPosition = {
+                            decoration->uiProperties.position.x - (int)(decoration->text->getGlobalBounds().width / 2),
                             decoration->uiProperties.position.y
-                            );
+                    };
+                    decoration->text->setPosition(centeredPosition.x, centeredPosition.y);
                 } else if(uiObjProperties.align == Alignment::Right) {
                     Position position = decoration->uiProperties.position;
                     position.x += decoration->text->getLocalBounds().width;

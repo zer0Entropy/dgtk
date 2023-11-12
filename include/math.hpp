@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <random>
 
 #ifndef DGTKPROJECT_MATH_HPP
 #define DGTKPROJECT_MATH_HPP
@@ -97,6 +98,14 @@ private:
     std::string GetNextTerm(std::string_view expression, std::size_t position);
 
     std::map<std::string,int> variables;
+};
+
+class RandomNumberGenerator {
+public:
+
+    int                 GetRandom(int min, int max);
+private:
+    std::mt19937        generator;
 };
 
 #endif //DGTKPROJECT_MATH_HPP
