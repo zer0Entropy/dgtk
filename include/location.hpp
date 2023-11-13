@@ -13,4 +13,12 @@ struct MapLocation {
     int y;
 };
 
+struct Room {
+    MapLocation topLeft;
+    MapLocation center;
+    int width;
+    int height;
+    bool isConnected;
+};
+
 #endif //DGTKPROJECT_LOCATION_HPP

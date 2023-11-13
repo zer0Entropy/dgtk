@@ -5,59 +5,20 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
-#include <nlohmann/json.hpp>
+
 #include "id.hpp"
 #include "location.hpp"
 #include "position.hpp"
 #include "display.hpp"
 #include "math.hpp"
+#include "path.hpp"
+#include "terrain.hpp"
 
 #ifndef DGTKPROJECT_MAP_HPP
 #define DGTKPROJECT_MAP_HPP
 
-enum class TerrainType {
-    Empty = 0, Floor, Wall, TotalNumTerrainTypes
-};
-
-const std::vector<std::string> TerrainTypeNames = {
-        {"empty"},
-        {"floor"},
-        {"wall"}
-};
-
-namespace sf {
-    class Sprite;
-    class Texture;
-}
-
-enum class TerrainPropertyID {
-    Name = 0,
-    TerrainType,
-    Walkable,
-    TexturePosition,
-    TotalNumTerrainPropertyIDs
-};
-
-const std::vector<std::string> TerrainPropertyNames = {
-        {"name"},
-        {"type"},
-        {"walkable"},
-        {"texture_position"}
-};
-
-struct TerrainProperties {
-    std::string                     name;
-    TerrainType                     terrainType;
-    bool                            isWalkable;
-    Position                        texturePosition;
-    sf::Texture*                    texture;
-};
-
-class Game;
-
-TerrainProperties ReadTerrainPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);
-nlohmann::json WriteTerrainPropertiesToJSON(const TerrainProperties& terrainProperties);
+constexpr int MaxMapWidth(100);
+constexpr int MaxMapHeight(100);
 
 class Creature;
 
@@ -68,21 +29,10 @@ struct Tile {
     Creature*                       creature;
 };
 
-struct Room {
-    MapLocation topLeft;
-    MapLocation center;
-    int width;
-    int height;
-    bool isConnected;
-};
-
 struct TilePlacementStrategy {
     TerrainType     defaultTerrainType;
     TerrainType     edges[(int)Direction::TotalNumCardinalDirections];
 };
-
-constexpr int MaxMapWidth(100);
-constexpr int MaxMapHeight(100);
 
 enum class MapPropertyID {
     MapName = 0,
@@ -127,6 +77,7 @@ struct MapProperties {
     TilePlacementStrategy   strategy;
     std::map<TerrainType,TerrainProperties> terrainProperties;
     std::vector<Room>       roomList;
+    std::vector<Room>       hallwayList;
 };
 
 struct Map {
@@ -138,5 +89,7 @@ MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* gam
 nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties);
 
 void GenerateMap(Map* map, const DisplayConfig& displayConfig);
+
+void CreateHallways(Map& map);
 
 #endif //DGTKPROJECT_MAP_HPP

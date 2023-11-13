@@ -5,6 +5,7 @@
 #include "../include/map.hpp"
 #include "../include/game.hpp"
 #include "../include/log.hpp"
+#include "../include/dijkstra.hpp"
 
 TerrainProperties ReadTerrainPropertiesFromJSON(const nlohmann::json& terrainJSON, Game* game) {
     TerrainProperties terrainProperties;
@@ -201,43 +202,35 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
 
 }
 
-/*
- void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
-    const MapProperties& properties(map->properties);
-    const TilePlacementStrategy& strategy(properties.strategy);
+void CreateHallways(Map& map) {
+    std::map<int, Path> roomPaths;
 
-    TerrainType terrainMap[properties.height][properties.width];
+    for(auto& room : map.properties.roomList) {
+        Dijkstra::DistanceMap distanceMap;
+        MapLocation center = room.center;
+        distanceMap.Generate(center, map);
+        roomPaths.clear();
 
-    for(int y = 0; y < properties.height; ++y) {
-        for(int x = 0; x < properties.width; ++x) {
-            if(y == 0) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Up];
-            } else if( y == properties.height - 1) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Down];
-            } else if( x == 0) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Left];
-            } else if( x == properties.width - 1) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Right];
-            } else {
-                terrainMap[y][x] = strategy.defaultTerrainType;
+        int roomIndex(0);
+        int shortestDistance(999), shortestDistanceIndex(0);
+        TerrainProperties* floor = (TerrainProperties*)(&map.properties.terrainProperties.at(TerrainType::Floor));
+        for(auto& room2 : map.properties.roomList) {
+            if(center.x == room2.center.x && center.y == room2.center.y) { continue; }
+            Path shortestPath = distanceMap.FindPath(room2.center);
+            if(shortestPath.steps.size() < shortestDistance) {
+                shortestDistance = shortestPath.steps.size();
+                shortestDistanceIndex = roomIndex;
             }
-        }
-    }
+            roomPaths.insert(std::make_pair(roomIndex++, shortestPath));
+        } // room2
 
-    float scaleX = displayConfig.tileScaleX;
-    float scaleY = displayConfig.tileScaleY;
-
-    for(int y = 0; y < properties.height; ++y) {
-        for(int x = 0; x < properties.width; ++x) {
-            Tile& tile( map->tileArray[y][x] );
-            TerrainType terrainType = terrainMap[y][x];
-            tile.terrain = &map->properties.terrainProperties.at(terrainType);
-            tile.sprite.reset(new sf::Sprite);
-            tile.sprite->setTexture(*tile.terrain->texture);
-            tile.sprite->setScale(scaleX, scaleY);
-            tile.isVisible = true;
+        Path shortestPath = roomPaths.at(shortestDistanceIndex);
+        while(!shortestPath.steps.empty()) {
+            MapLocation location(shortestPath.steps.front());
+            shortestPath.steps.pop_front();
+            map.tileArray[location.y][location.x].terrain = floor;
+            map.tileArray[location.y][location.x].sprite->setTexture(*floor->texture);
         }
-    }
+    } // room
+
 }
-
-*/

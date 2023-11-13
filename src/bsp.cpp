@@ -73,7 +73,7 @@ int BSP::Tree::GetLeafCount(BSP::Node* rootPtr) const {
 void BSP::Tree::Split(BSP::Node* rootPtr, int minWidth, int minHeight, int maxWidth, int maxHeight) {
 
     BSP::SplitDirection splitDirection( BSP::SplitDirection::Horizontal );
-    int probabilityHorizontal = 55;
+    int probabilityHorizontal = 45;
     int dieRoll = rng.GetRandom(1, 100);
     if(rootPtr->rect.width > maxWidth || rootPtr->rect.height > maxHeight) {
         if (rootPtr->rect.width < rootPtr->rect.height || dieRoll <= probabilityHorizontal) {
