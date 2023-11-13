@@ -16,7 +16,7 @@ void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, const Ma
     height = source.properties.height;
     for(int y = 0; y < height; ++y) {
         for(int x = 0; x < width; ++x) {
-            nodeMap[y][x].location = {x, y};
+            nodeMap[y][x].location = MapLocation{x, y};
         }
     }
     currentNode = GetNode(origin.x, origin.y);
@@ -61,9 +61,9 @@ void Dijkstra::DistanceMap::PopulateFrontier() {
     PopulateAdjacent();
     while(!adjacent.empty()) {
         Node* adjNode(adjacent.front());
-        adjNode->previous = currentNode;
         adjacent.pop_front();
         if(adjNode->distance < 0) {
+            adjNode->previous = currentNode;
             frontier.push_back(adjNode);
         }
     }
