@@ -460,50 +460,6 @@ std::string MathParser::GetPrecedingTerm(std::string_view expression, std::size_
     return precedingTerm;
 }
 
-/*
-std::string MathParser::GetPrecedingTerm(std::string_view expression, std::size_t position) {
-    std::size_t beginPosition(position - 1), endPosition(0);
-    bool termFound(false);
-    bool operatorFound(false);
-    // Find first whitespace before position
-    for(int index = position - 1; endPosition == 0 && index >= 0; --index) {
-        char c(expression[index]);
-        for(int opIndex = 0; !operatorFound && opIndex < (int)OperatorID::TotalNumOperatorIDs; ++opIndex) {
-            if(c == OperatorSymbols[opIndex]) {
-                    operatorFound = true;
-            }
-        }
-        if(c == ' ') {
-            if(!termFound) {
-                beginPosition = index;
-                operatorFound =  false;
-            } else {
-                endPosition = index;
-            }
-        } else if(operatorFound) {
-            if(termFound) {
-                endPosition  = index;
-            } else {
-                operatorFound = false;
-            }
-        } else {
-            termFound = true;
-        }
-    }
-    if(endPosition <= beginPosition) {
-        if(endPosition == 0) {
-            beginPosition = endPosition;
-            endPosition = position;
-        } else {
-            std::size_t tmpPosition = endPosition;
-            beginPosition = endPosition;
-            endPosition = tmpPosition;
-        }
-    }
-    std::string precedingTerm = std::string{expression.substr(beginPosition, endPosition - beginPosition)};
-    return precedingTerm;
-}
-*/
 std::string MathParser::GetNextTerm(std::string_view expression, std::size_t position) {
     std::string nextTerm("");
     bool done(false);

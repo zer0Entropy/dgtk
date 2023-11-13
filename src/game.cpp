@@ -192,20 +192,32 @@ void Game::TransitionTo(Scene* scene) {
             terrain.texture = resourceSystem->GetTexture(TerrainTypeNames.at(terrainIndex));
         }
 
-        BSP::Node* testNode = new BSP::Node(nullptr);
-        testNode->left = 0;
-        testNode->top = 0;
-        testNode->width = scene->map->properties.width;
-        testNode->height = scene->map->properties.height;
+        sf::IntRect area = {
+                0,
+                0,
+                scene->map->properties.width,
+                scene->map->properties.height
+        };
+        int minWidth(4);
+        int minHeight(4);
+        int maxWidth(15);
+        int maxHeight(15);
+        BSP::Tree bspTree(rng, GetLogSystem());
+        bspTree.AddLeaf(area);
+        bspTree.Split(minWidth, minHeight, maxWidth, maxHeight);
+        auto areaList = bspTree.GetLeafList();
 
-        BSP::Tree* testTree = new BSP::Tree(testNode);
-        testTree->SplitLeaves(rng);
-        int nodeCount = testTree->GetNodeCount();
-        auto leafList = testTree->GetLeafList();
-
-        testTree->SplitLeaves(rng);
-        nodeCount = testTree->GetNodeCount();
-        leafList = testTree->GetLeafList();
+        for(auto possibleRoom : areaList) {
+            if(possibleRoom.width >= minWidth &&
+                possibleRoom.height >= minHeight &&
+                possibleRoom.width <= maxWidth &&
+                possibleRoom.height <= maxHeight) {
+                scene->map->properties.roomList.push_back(Room{
+                        {possibleRoom.left, possibleRoom.top},
+                        possibleRoom.width,
+                        possibleRoom.height });
+            }
+        }
 
         GenerateMap(scene->map.get(), displayConfig);
 

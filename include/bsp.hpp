@@ -3,6 +3,8 @@
 //
 
 #include <vector>
+#include <SFML/Graphics/Rect.hpp>
+#include "log.hpp"
 #include "math.hpp"
 
 #ifndef DGTKPROJECT_BSP_HPP
@@ -10,41 +12,59 @@
 
 namespace BSP {
 
-    constexpr int MinLeafWidth(6);
-    constexpr int MinLeafHeight(4);
-
-    struct Node {
-        int top;
-        int left;
-        int width;
-        int height;
-        int childCount;
-        Node* parent;
-        Node* leftChild;
-        Node* rightChild;
-        explicit Node(Node* parentPtr);
-        Node(const Node& copyNode) = default;
-        ~Node() = default;
+    enum class SplitDirection {
+        Horizontal = 0,
+        Vertical
     };
 
-    struct Tree {
-        Node* root;
-        std::vector<Node*> leafList;
+    struct Node {
+        sf::IntRect             area;
+        Node*                   leftChild;
+        Node*                   rightChild;
+    };
 
-        explicit Tree(Node* rootNode);
-        Tree(const Tree& copyTree) = default;
-        ~Tree() = default;
+    class Tree {
+    public:
+        Tree(RandomNumberGenerator& randomNumberGenerator, LogSystem* logSystemPtr);
+        Tree(const Tree& copy) = default;
+        ~Tree();
 
-        Tree GetLeftSubtree() const;
-        Tree GetRightSubtree() const;
+        void                        RemoveSubtree(Node* rootPtr);
 
-        int GetNodeCount() const;
-        const std::vector<Node*>& GetLeafList();
+        void                        Split(int minWidth, int minHeight, int maxWidth, int maxHeight);
 
-        void SplitLeaves(RandomNumberGenerator& rng);
+        void                        AddLeaf(sf::IntRect area);
+
+        void                        ConstructListOrder();
+
+        std::vector<sf::IntRect>    GetListOrder();
+
+        void                        ConstructLeafList();
+
+        std::vector<sf::IntRect>    GetLeafList();
+
+        void                        PreorderTraversal();
+
+        void                        InOrderTraversal();
+    private:
+        Node*                       CreateLeaf(sf::IntRect area);
+
+        void                        Split(Node* rootPtr, int minWidth, int minHeight, int maxWidth, int maxHeight);
+
+        void                        ConstructListOrder(Node* rootPtr);
+
+        void                        ConstructLeafList(Node* rootPtr);
+
+        void                        PreorderTraversal(Node* rootPtr);
+
+        void                        InOrderTraversal(Node* rootPtr);
+
+        RandomNumberGenerator&      rng;
+        LogSystem*                  logSystem;
+        Node*                       root;
+        std::vector<sf::IntRect>    listOrder;
     };
 
 };
-
 
 #endif //DGTKPROJECT_BSP_HPP

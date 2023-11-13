@@ -44,44 +44,6 @@ nlohmann::json WriteTerrainPropertiesToJSON(const TerrainProperties& terrainProp
     return terrainJSON;
 }
 
-void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
-    const MapProperties& properties(map->properties);
-    const TilePlacementStrategy& strategy(properties.strategy);
-
-    TerrainType terrainMap[properties.height][properties.width];
-
-    for(int y = 0; y < properties.height; ++y) {
-        for(int x = 0; x < properties.width; ++x) {
-            if(y == 0) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Up];
-            } else if( y == properties.height - 1) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Down];
-            } else if( x == 0) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Left];
-            } else if( x == properties.width - 1) {
-                terrainMap[y][x] = strategy.edges[(int)Direction::Right];
-            } else {
-                terrainMap[y][x] = strategy.defaultTerrainType;
-            }
-        }
-    }
-
-    float scaleX = displayConfig.tileScaleX;
-    float scaleY = displayConfig.tileScaleY;
-
-    for(int y = 0; y < properties.height; ++y) {
-        for(int x = 0; x < properties.width; ++x) {
-            Tile& tile( map->tileArray[y][x] );
-            TerrainType terrainType = terrainMap[y][x];
-            tile.terrain = &map->properties.terrainProperties.at(terrainType);
-            tile.sprite.reset(new sf::Sprite);
-            tile.sprite->setTexture(*tile.terrain->texture);
-            tile.sprite->setScale(scaleX, scaleY);
-            tile.isVisible = true;
-        }
-    }
-}
-
 MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game) {
     MapProperties mapProperties;
     MathParser& mathParser = game->GetMathParser();
@@ -193,3 +155,89 @@ nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties) {
     nlohmann::json mapJSON;
     return mapJSON;
 }
+
+void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
+    const MapProperties& properties(map->properties);
+    TerrainType terrainMap[properties.height][properties.width];
+
+    // First pass: make everything a Wall
+    for(int y = 0; y < properties.height; ++y) {
+        for (int x = 0; x < properties.width; ++x) {
+            terrainMap[y][x] = TerrainType::Wall;
+        } // x
+    } // y
+
+    // Second pass: change each tile within a Room into Floor
+    for(const auto& room : map->properties.roomList) {
+        const MapLocation& topLeft(room.topLeft);
+        for(int y = topLeft.y + 1; y < topLeft.y + room.height - 1; ++y) {
+            for(int x = topLeft.x + 1; x < topLeft.x + room.width - 1; ++x) {
+                terrainMap[y][x] = TerrainType::Floor;
+            } // x
+        } // y
+    } // for each Room
+
+    TerrainProperties& floor(map->properties.terrainProperties.at(TerrainType::Floor));
+    TerrainProperties& wall(map->properties.terrainProperties.at(TerrainType::Wall));
+    float scaleX = displayConfig.tileScaleX;
+    float scaleY = displayConfig.tileScaleY;
+
+    // Final pass: create a Tile at each MapLocation, create its Sprite & set properties
+    for(int y = 0; y < properties.height; ++y) {
+        for(int x = 0; x < properties.width; ++x) {
+            Tile& tile( map->tileArray[y][x] );
+            TerrainType terrainType = terrainMap[y][x];
+            tile.terrain = &map->properties.terrainProperties.at(terrainType);
+            tile.sprite.reset(new sf::Sprite);
+            tile.sprite->setTexture(*tile.terrain->texture);
+            tile.sprite->setScale(scaleX, scaleY);
+            tile.isVisible = true;
+
+            /* DEBUG */
+            tile.terrain->isWalkable = true;
+            /* DEBUG */
+        }
+    }
+
+}
+
+/*
+ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
+    const MapProperties& properties(map->properties);
+    const TilePlacementStrategy& strategy(properties.strategy);
+
+    TerrainType terrainMap[properties.height][properties.width];
+
+    for(int y = 0; y < properties.height; ++y) {
+        for(int x = 0; x < properties.width; ++x) {
+            if(y == 0) {
+                terrainMap[y][x] = strategy.edges[(int)Direction::Up];
+            } else if( y == properties.height - 1) {
+                terrainMap[y][x] = strategy.edges[(int)Direction::Down];
+            } else if( x == 0) {
+                terrainMap[y][x] = strategy.edges[(int)Direction::Left];
+            } else if( x == properties.width - 1) {
+                terrainMap[y][x] = strategy.edges[(int)Direction::Right];
+            } else {
+                terrainMap[y][x] = strategy.defaultTerrainType;
+            }
+        }
+    }
+
+    float scaleX = displayConfig.tileScaleX;
+    float scaleY = displayConfig.tileScaleY;
+
+    for(int y = 0; y < properties.height; ++y) {
+        for(int x = 0; x < properties.width; ++x) {
+            Tile& tile( map->tileArray[y][x] );
+            TerrainType terrainType = terrainMap[y][x];
+            tile.terrain = &map->properties.terrainProperties.at(terrainType);
+            tile.sprite.reset(new sf::Sprite);
+            tile.sprite->setTexture(*tile.terrain->texture);
+            tile.sprite->setScale(scaleX, scaleY);
+            tile.isVisible = true;
+        }
+    }
+}
+
+*/

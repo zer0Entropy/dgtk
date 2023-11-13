@@ -3,137 +3,173 @@
 //
 #include "../include/bsp.hpp"
 
-BSP::Node::Node(Node* parentPtr): parent(parentPtr), childCount(0), leftChild(nullptr), rightChild(nullptr) {}
+BSP::Tree::Tree(RandomNumberGenerator& randomNumberGenerator, LogSystem* logSystemPtr):
+    rng(randomNumberGenerator), logSystem(logSystemPtr), root(nullptr) {
 
-BSP::Tree::Tree(BSP::Node* rootNode): root(rootNode) {}
+}
 
-BSP::Tree BSP::Tree::GetLeftSubtree() const {
-    if(!root) { return Tree(nullptr); }
-    return Tree(root->leftChild);
+BSP::Tree::~Tree() {
+    RemoveSubtree(root);
 }
-BSP::Tree BSP::Tree::GetRightSubtree() const {
-    if(!root) { return Tree(nullptr); }
-    return Tree(root->rightChild);
-}
-int BSP::Tree::GetNodeCount() const {
-    int nodeCount(0);
-    if(!root) { return nodeCount; }
-    else {
-        ++nodeCount;
-        if(root->leftChild) {
-            nodeCount += GetLeftSubtree().GetNodeCount();
+
+void BSP::Tree::RemoveSubtree(BSP::Node* rootPtr) {
+    if(rootPtr) {
+        if(rootPtr->leftChild) {
+            RemoveSubtree(rootPtr->leftChild);
         }
-        if(root->rightChild) {
-            nodeCount += GetRightSubtree().GetNodeCount();
+        if(rootPtr->rightChild) {
+            RemoveSubtree(rootPtr->rightChild);
         }
+        delete rootPtr;
     }
-    return nodeCount;
 }
 
-const std::vector<BSP::Node*>& BSP::Tree::GetLeafList() {
-    leafList.clear();
-    int nodeCount = GetNodeCount();
-
-    if(nodeCount == 0) { return leafList; }
-    if(nodeCount == 1) {
-        leafList.push_back(root);
-    } else if(nodeCount == 2) {
-        leafList.push_back(root->leftChild);
-        leafList.push_back(root->rightChild);
-    } else {
-        auto leftList = GetLeftSubtree().GetLeafList();
-        auto rightList = GetRightSubtree().GetLeafList();
-        for(auto leftNode : leftList) {
-            leafList.push_back(leftNode);
-        }
-        for(auto rightNode : rightList) {
-            leafList.push_back(rightNode);
-        }
-    }
-
-    return leafList;
+void BSP::Tree::Split(int minWidth, int minHeight, int maxWidth, int maxHeight) {
+    Split(root, minWidth, minHeight, maxWidth, maxHeight);
 }
 
-void BSP::Tree::SplitLeaves(RandomNumberGenerator& rng) {
-    auto leafList = GetLeafList();
+void BSP::Tree::AddLeaf(sf::IntRect area) {
+    root = CreateLeaf(area);
+}
 
-    int minTop;
-    int maxTop;
-    int minLeft, maxLeft;
-    int minWidth, maxWidth;
-    int minHeight, maxHeight;
+void BSP::Tree::ConstructListOrder() {
+    listOrder.clear();
+    ConstructListOrder(root);
+}
 
-    for(Node* leaf : leafList) {
-        leaf->leftChild = new Node(leaf);
-        leaf->rightChild = new Node(leaf);
-        leaf->childCount = 2;
-        // TOP must be:     greater than leaf->top, no greater than three-quarters (leaf->top + leaf->height)
-        minTop = leaf->top + 1;
-        maxTop = 3 * (leaf->top + leaf->height) / 4;
-        while(maxTop <= minTop) {
-            if(minTop >= BSP::MinLeafHeight - 2) {
-                minTop -= 2;
-            }
-            maxTop += 2;
-        }
-        // LEFT must be:    greater than leaf->left, no greater than three-quarters (leaf->left + leaf->width)
-        minLeft = leaf->left + 1;
-        maxLeft = 3 * (leaf->left + leaf->width) / 4;
-        while(maxLeft <= minLeft) {
-            if(minLeft >= BSP::MinLeafWidth - 2) {
-                minLeft -= 2;
-            }
-            maxLeft += 2;
-        }
-        // WIDTH must be:   greater than (leaf->width / 4), no greater than 3 * (leaf->width / 4)
-        minWidth = leaf->width / 4;
-        maxWidth = 3 * (leaf->width / 4);
-        while(maxWidth <= minWidth) {
-            if(minWidth >= BSP::MinLeafWidth - 1) {
-                --minWidth;
-            }
-            ++maxWidth;
-        }
-        // HEIGHT must be:  greater than (leaf->height / 3), no greater than 2 * (leaf->height / 3)
-        minHeight = leaf->height / 3;
-        maxHeight = 2 * (leaf->height) / 3;
-        while(maxHeight <= minHeight) {
-            if(minHeight >= BSP::MinLeafHeight - 1) {
-                --minHeight;
-            }
-            ++maxHeight;
-        }
+std::vector<sf::IntRect> BSP::Tree::GetListOrder() {
+    return std::vector<sf::IntRect>();
+}
 
-        bool retry(false);
-        do {
-            // Let the random generation commence!
-            leaf->leftChild->top = rng.GetRandom(minTop, maxTop);
-            leaf->leftChild->left = rng.GetRandom(minLeft, maxLeft);
-            leaf->leftChild->width = rng.GetRandom(minWidth, maxWidth);
-            leaf->leftChild->height = rng.GetRandom(minHeight, maxHeight);
+void BSP::Tree::ConstructLeafList() {
+    ConstructLeafList(root);
+}
 
-            bool verticalSplit(false);
-            int coinFlip = rng.GetRandom(0, 1);
-            if(coinFlip) { verticalSplit = true; }
+std::vector<sf::IntRect> BSP::Tree::GetLeafList() {
+    ConstructListOrder();
+    return listOrder;
+}
 
-            if(verticalSplit) {
-                leaf->rightChild->top = leaf->leftChild->top;
-                leaf->rightChild->left = leaf->leftChild->left + leaf->leftChild->width + 1;
-                leaf->rightChild->width = leaf->width - leaf->leftChild->width - 1;
-                leaf->rightChild->height = leaf->leftChild->height;
+void BSP::Tree::PreorderTraversal() {
+    PreorderTraversal(root);
+}
+
+void BSP::Tree::InOrderTraversal() {
+    InOrderTraversal(root);
+}
+
+BSP::Node* BSP::Tree::CreateLeaf(sf::IntRect area) {
+    BSP::Node* leaf = new Node();
+    leaf->area = area;
+    leaf->leftChild = leaf->rightChild = nullptr;
+    return leaf;
+}
+
+void BSP::Tree::Split(BSP::Node* rootPtr, int minWidth, int minHeight, int maxWidth, int maxHeight) {
+    BSP::SplitDirection splitDirection(BSP::SplitDirection::Vertical);
+
+    // PRE-PROCESSING:  Determine areas eligible for splitting and SplitDirection
+    if(rootPtr->area.width > maxWidth || rootPtr->area.height > maxHeight) {
+        if(rootPtr->area.width != rootPtr->area.height) {
+            if(rootPtr->area.width < rootPtr->area.height) {
+                splitDirection = BSP::SplitDirection::Horizontal;
             } else {
-                leaf->rightChild->top = leaf->leftChild->top + leaf->leftChild->height;
-                leaf->rightChild->left = leaf->leftChild->left;
-                leaf->rightChild->width = leaf->leftChild->width;
-                leaf->rightChild->height = leaf->height - leaf->leftChild->height;
+                int horizontalProbability = 55;
+                int diceRoll = rng.GetRandom(1, 100);
+                if(diceRoll <= horizontalProbability) {
+                    splitDirection = BSP::SplitDirection::Horizontal;
+                } else {
+                    splitDirection = BSP::SplitDirection::Vertical;
+                }
             }
+        }
+    }
 
-            if(leaf->leftChild->width < BSP::MinLeafWidth)          { retry = true; }
-            else if(leaf->leftChild->height < BSP::MinLeafHeight)   { retry = true; }
-            else if(leaf->rightChild->width < BSP::MinLeafWidth)    { retry = true; }
-            else if(leaf->rightChild->height < BSP::MinLeafHeight)  { retry = true;}
-            else                                                    { retry = false; }
-        } while(retry);
+    bool canSplit(false);
+    if(rootPtr->area.width > minWidth && rootPtr->area.height > minHeight) {
+        canSplit = true;
+    }
 
+    if(canSplit) {
+        sf::IntRect leftArea, rightArea;
+        if(splitDirection == BSP::SplitDirection::Horizontal) {
+            int height = minHeight + rng.GetRandom(0, rootPtr->area.height - minHeight);
+            leftArea = {
+                    rootPtr->area.left, rootPtr->area.top, rootPtr->area.width, height
+            };
+            rightArea = {
+                    rootPtr->area.left, rootPtr->area.top + height, rootPtr->area.width, rootPtr->area.height - height
+            };
+        } // HORIZONTAL SPLIT
+        else if(splitDirection == BSP::SplitDirection::Vertical) {
+            int width = minWidth + rng.GetRandom(0, rootPtr->area.width - minWidth);
+            leftArea = {
+                    rootPtr->area.left, rootPtr->area.top, width, rootPtr->area.height
+            };
+            rightArea = {
+                    rootPtr->area.left + width, rootPtr->area.top, rootPtr->area.width - width, rootPtr->area.height
+            };
+        } // VERTICAL SPLIT
+        rootPtr->leftChild = CreateLeaf(leftArea);
+        rootPtr->rightChild = CreateLeaf(rightArea);
+        Split(rootPtr->leftChild, minWidth, minHeight, maxWidth, maxHeight);
+        Split(rootPtr->rightChild, minWidth, minHeight, maxWidth, maxHeight);
+    } // CAN_SPLIT
+}
+
+void BSP::Tree::ConstructListOrder(BSP::Node* rootPtr) {
+    if(!rootPtr) { return; }
+
+    listOrder.push_back(rootPtr->area);
+    ConstructListOrder(rootPtr->leftChild);
+    ConstructListOrder(rootPtr->rightChild);
+}
+
+void BSP::Tree::ConstructLeafList(BSP::Node* rootPtr) {
+    if(!rootPtr) { return; }
+
+    if(!rootPtr->leftChild && !rootPtr->rightChild) {
+        listOrder.push_back(rootPtr->area);
+    }
+
+    ConstructLeafList(rootPtr->leftChild);
+    ConstructLeafList(rootPtr->rightChild);
+}
+
+void BSP::Tree::PreorderTraversal(BSP::Node* rootPtr) {
+    if(!rootPtr) { return; }
+
+    std::string message("AREA{ (");
+    message.append(std::to_string(rootPtr->area.left));
+    message.append(", ");
+    message.append(std::to_string(rootPtr->area.top));
+    message.append("), width=");
+    message.append(std::to_string(rootPtr->area.width));
+    message.append(", height=");
+    message.append(std::to_string(rootPtr->area.height));
+    message.append(" }");
+    logSystem->PublishMessage(message);
+
+    PreorderTraversal(rootPtr->leftChild);
+    PreorderTraversal(rootPtr->rightChild);
+}
+
+void BSP::Tree::InOrderTraversal(BSP::Node* rootPtr) {
+    if(!rootPtr) { return; }
+    if(rootPtr->leftChild) {
+        InOrderTraversal(rootPtr->leftChild);
+
+        std::string message("AREA{ (");
+        message.append(std::to_string(rootPtr->area.left));
+        message.append(", ");
+        message.append(std::to_string(rootPtr->area.top));
+        message.append("), width=");
+        message.append(std::to_string(rootPtr->area.width));
+        message.append(", height=");
+        message.append(std::to_string(rootPtr->area.height));
+        message.append(" }");
+        logSystem->PublishMessage(message);
+
+        InOrderTraversal(rootPtr->rightChild);
     }
 }

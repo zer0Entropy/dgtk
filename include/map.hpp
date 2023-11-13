@@ -68,6 +68,12 @@ struct Tile {
     Creature*                       creature;
 };
 
+struct Room {
+    MapLocation topLeft;
+    int width;
+    int height;
+};
+
 struct TilePlacementStrategy {
     TerrainType     defaultTerrainType;
     TerrainType     edges[(int)Direction::TotalNumCardinalDirections];
@@ -118,6 +124,7 @@ struct MapProperties {
     int             textureHeight;
     TilePlacementStrategy   strategy;
     std::map<TerrainType,TerrainProperties> terrainProperties;
+    std::vector<Room>       roomList;
 };
 
 struct Map {
