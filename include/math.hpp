@@ -102,9 +102,13 @@ private:
 
 class RandomNumberGenerator {
 public:
+    RandomNumberGenerator(unsigned int seed);
+    RandomNumberGenerator(const RandomNumberGenerator& copy) = delete;
+    ~RandomNumberGenerator() = default;
 
     int                 GetRandom(int min, int max);
 private:
+    unsigned int                 seedUsed;
     std::mt19937        generator;
 };
 

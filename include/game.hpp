@@ -27,7 +27,7 @@ enum class GameStatus {
 
 class Game {
 public:
-    explicit Game(const std::filesystem::path& workingDir);
+    explicit Game(const std::filesystem::path& workingDir, unsigned int seed);
     Game(const Game& copy) = delete;
     ~Game();
 

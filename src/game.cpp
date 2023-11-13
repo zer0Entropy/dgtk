@@ -11,8 +11,12 @@
 
 const std::string Game::configFilename = "game.cfg";
 
-Game::Game(const std::filesystem::path& workingDir):
-    workingDirectory(workingDir), status(GameStatus::MainMenu), currentScene(nullptr) {
+Game::Game(const std::filesystem::path& workingDir, unsigned int seed):
+    rng(seed),
+    workingDirectory(workingDir),
+    status(GameStatus::MainMenu),
+    currentScene(nullptr) {
+
 }
 
 Game::~Game() {
@@ -198,25 +202,27 @@ void Game::TransitionTo(Scene* scene) {
                 scene->map->properties.width,
                 scene->map->properties.height
         };
-        int minWidth(4);
-        int minHeight(4);
-        int maxWidth(15);
-        int maxHeight(15);
-        BSP::Tree bspTree(rng, GetLogSystem());
-        bspTree.AddLeaf(area);
+        int minWidth(6);
+        int minHeight(6);
+        int maxWidth(8);
+        int maxHeight(8);
+        BSP::Tree bspTree(rng);
+        bspTree.CreateRootNode(area);
         bspTree.Split(minWidth, minHeight, maxWidth, maxHeight);
-        auto areaList = bspTree.GetLeafList();
+        auto areaList = bspTree.GetLeafValues();
 
         for(auto possibleRoom : areaList) {
-            if(possibleRoom.width >= minWidth &&
+          /*  if(possibleRoom.width >= minWidth &&
                 possibleRoom.height >= minHeight &&
-                possibleRoom.width <= maxWidth &&
-                possibleRoom.height <= maxHeight) {
+                possibleRoom.width <= maxWidth+6 &&
+                possibleRoom.height <= maxHeight+6) { */
                 scene->map->properties.roomList.push_back(Room{
                         {possibleRoom.left, possibleRoom.top},
-                        possibleRoom.width,
-                        possibleRoom.height });
-            }
+                        {possibleRoom.left + possibleRoom.width, possibleRoom.top + possibleRoom.height},
+                            possibleRoom.width,
+                            possibleRoom.height,
+                            false });
+            //}
         }
 
         GenerateMap(scene->map.get(), displayConfig);

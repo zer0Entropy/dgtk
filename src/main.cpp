@@ -1,3 +1,4 @@
+#include <chrono>
 #include <filesystem>
 #include <SFML/Graphics.hpp>
 #include "../include/display.hpp"
@@ -10,7 +11,10 @@
 
 int main()
 {
-    Game game(std::filesystem::current_path());
+    typedef std::chrono::high_resolution_clock Clock;
+    Clock::time_point startTime(Clock::now());
+    Clock::duration elapsed(Clock::now() - startTime);
+    Game game(std::filesystem::current_path(), elapsed.count());
     game.Init();
 
     ResourceSystem* resourceSystem(game.GetResourceSystem());

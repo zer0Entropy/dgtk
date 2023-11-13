@@ -484,6 +484,10 @@ std::string MathParser::GetNextTerm(std::string_view expression, std::size_t pos
     return nextTerm;
 }
 
+RandomNumberGenerator::RandomNumberGenerator(unsigned int seed): generator(seed), seedUsed(seed) {
+
+}
+
 int RandomNumberGenerator::GetRandom(int min, int max) {
     std::uniform_int_distribution<int> distribution(min, max);
     int randomNumber = distribution(generator);

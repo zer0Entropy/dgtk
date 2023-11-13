@@ -70,8 +70,10 @@ struct Tile {
 
 struct Room {
     MapLocation topLeft;
+    MapLocation center;
     int width;
     int height;
+    bool isConnected;
 };
 
 struct TilePlacementStrategy {
