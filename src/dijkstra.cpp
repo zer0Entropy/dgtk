@@ -3,6 +3,10 @@
 //
 #include "../include/dijkstra.hpp"
 
+Dijkstra::DistanceMap::DistanceMap(LogSystem* logSystemPtr): logSystem(logSystemPtr) {
+
+}
+
 Dijkstra::Node* Dijkstra::DistanceMap::GetNode(int x, int y) {
     if(x >= 0 && x < width && y >= 0 && y < height) {
         return &nodeMap[y][x];
@@ -11,6 +15,15 @@ Dijkstra::Node* Dijkstra::DistanceMap::GetNode(int x, int y) {
 }
 
 void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, const Map& source) {
+    std::string message("Generating Dijkstra map...");
+    logSystem->PublishMessage(message);
+    message = "Origin: (";
+    message.append(std::to_string(originLocation.x));
+    message.append(", ");
+    message.append(std::to_string(originLocation.y));
+    message.append(")");
+    logSystem->PublishMessage(message);
+
     origin = originLocation;
     width = source.properties.width;
     height = source.properties.height;
@@ -31,6 +44,12 @@ void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, const Ma
 }
 
 Path Dijkstra::DistanceMap::FindPath(const MapLocation& destination) {
+    std::string message("Finding path to destination: (");
+    message.append(std::to_string(destination.x));
+    message.append(", ");
+    message.append(std::to_string(destination.y));
+    message.append(")'");
+
     Path path;
     currentNode = GetNode(destination.x, destination.y);
     path.steps.push_front(destination);
@@ -45,6 +64,11 @@ Path Dijkstra::DistanceMap::FindPath(const MapLocation& destination) {
             }
         }
     }
+
+    message = "Path found successfully - [";
+    message.append(std::to_string(path.steps.size()));
+    message.append(" steps]");
+    logSystem->PublishMessage(message);
     return path;
 }
 

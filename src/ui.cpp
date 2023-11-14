@@ -21,6 +21,8 @@ uiObjectProperties ReadUIObjPropertiesFromJSON(const nlohmann::json& jsonDoc, Ma
                 uiObjProperties.uiType = uiObjectType::Scrollbar;
             } else if(objTypeString.compare("map_view") == 0) {
                 uiObjProperties.uiType = uiObjectType::MapView;
+            } else if(objTypeString.compare("overlay") == 0) {
+                uiObjProperties.uiType = uiObjectType::Overlay;
             }
         } else if(key.compare(uiPropertyNames.at((int)uiPropertyID::Alignment)) == 0) {
             std::string alignString = value.get<std::string>();
@@ -91,6 +93,8 @@ uiObjectProperties ReadUIObjPropertiesFromJSON(const nlohmann::json& jsonDoc, Ma
                 uiObjProperties.layer = LayerID::Sprite;
             } else if(layerString.compare("text") == 0) {
                 uiObjProperties.layer = LayerID::Text;
+            } else if(layerString.compare("overlay") == 0) {
+                uiObjProperties.layer = LayerID::Overlay;
             }
         }  else if(key.compare(uiPropertyNames.at((int)uiPropertyID::TexturePath)) == 0) {
             uiObjProperties.textureSource.pathToFile = value.get<std::string>();

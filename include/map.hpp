@@ -13,6 +13,7 @@
 #include "math.hpp"
 #include "path.hpp"
 #include "terrain.hpp"
+#include "log.hpp"
 
 #ifndef DGTKPROJECT_MAP_HPP
 #define DGTKPROJECT_MAP_HPP
@@ -90,6 +91,6 @@ nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties);
 
 void GenerateMap(Map* map, const DisplayConfig& displayConfig);
 
-void CreateHallways(Map& map);
+void CreateHallways(Map& map, LogSystem* logSystem);
 
 #endif //DGTKPROJECT_MAP_HPP

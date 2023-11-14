@@ -10,6 +10,7 @@ enum class LayerID {
     WindowFrame,
     Sprite,
     Text,
+    Overlay,
     TotalNumLayerIDs
 };
 

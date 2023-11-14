@@ -202,20 +202,35 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
 
 }
 
-void CreateHallways(Map& map) {
+void CreateHallways(Map& map, LogSystem* logSystem) {
     std::map<int, Path> roomPaths;
+    std::string message;
 
     for(auto& room : map.properties.roomList) {
-        Dijkstra::DistanceMap distanceMap;
+        Dijkstra::DistanceMap distanceMap(logSystem);
         MapLocation center = room.center;
         distanceMap.Generate(center, map);
         roomPaths.clear();
+
+        message = "* center of map: room[";
+        message.append(std::to_string(center.x));
+        message.append(", ");
+        message.append(std::to_string(center.y));
+        message.append("] *");
+        logSystem->PublishMessage(message);
 
         int roomIndex(0);
         int shortestDistance(999), shortestDistanceIndex(0);
         TerrainProperties* floor = (TerrainProperties*)(&map.properties.terrainProperties.at(TerrainType::Floor));
         for(auto& room2 : map.properties.roomList) {
             if(center.x == room2.center.x && center.y == room2.center.y) { continue; }
+            message = "-- destination room: (";
+            message.append(std::to_string(room2.center.x));
+            message.append(", ");
+            message.append(std::to_string(room2.center.y));
+            message.append(") --");
+            logSystem->PublishMessage(message);
+
             Path shortestPath = distanceMap.FindPath(room2.center);
             if(shortestPath.steps.size() < shortestDistance) {
                 shortestDistance = shortestPath.steps.size();

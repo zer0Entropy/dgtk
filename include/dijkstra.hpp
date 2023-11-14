@@ -5,6 +5,7 @@
 #include "location.hpp"
 #include "path.hpp"
 #include "map.hpp"
+#include "log.hpp"
 
 #ifndef DGTKPROJECT_DIJKSTRA_HPP
 #define DGTKPROJECT_DIJKSTRA_HPP
@@ -22,6 +23,10 @@ namespace Dijkstra {
 
   class DistanceMap {
   public:
+      DistanceMap(LogSystem* logSystemPtr);
+      DistanceMap(const DistanceMap& copy) = default;
+      ~DistanceMap() = default;
+
       Node*                 GetNode(int x, int y);
       void                  Generate(const MapLocation& originLocation, const Map& source);
       Path                  FindPath(const MapLocation& destination);
@@ -29,6 +34,7 @@ namespace Dijkstra {
       void                  PopulateFrontier();
       void                  PopulateAdjacent();
 
+      LogSystem*            logSystem;
       MapLocation           origin;
       Node*                 currentNode;
       std::deque<Node*>     frontier;

@@ -45,7 +45,8 @@ enum class uiObjectType {
     Decoration,
     Toolbar,
     Scrollbar,
-    MapView
+    MapView,
+    Overlay
 };
 
 struct uiObjectProperties {
