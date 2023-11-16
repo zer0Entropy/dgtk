@@ -206,30 +206,42 @@ void CreateHallways(Map& map, LogSystem* logSystem) {
     std::map<int, Path> roomPaths;
     std::string message;
 
+    int roomIndex(0);
     for(auto& room : map.properties.roomList) {
         Dijkstra::DistanceMap distanceMap(logSystem);
         MapLocation center = room.center;
+        message = "\n";
+        logSystem->PublishMessage(message);
+        message = "*********************";
+        logSystem->PublishMessage(message);
+        message = "ROOM #";
+        message.append(std::to_string(++roomIndex));
+        message.append("[ ");
+        message.append("position = (");
+        message.append(std::to_string(room.topLeft.x));
+        message.append(", ");
+        message.append(std::to_string(room.topLeft.y));
+        message.append(") width = ");
+        message.append(std::to_string(room.width));
+        message.append(" height = ");
+        message.append(std::to_string(room.height));
+        message.append(" center = (");
+        message.append(std::to_string(room.center.x));
+        message.append(", ");
+        message.append(std::to_string(room.center.y));
+        message.append(") ]");
+        logSystem->PublishMessage(message);
+        message = "\n";
+        logSystem->PublishMessage(message);
+        logSystem->Update();
         distanceMap.Generate(center, map);
         roomPaths.clear();
-
-        message = "* center of map: room[";
-        message.append(std::to_string(center.x));
-        message.append(", ");
-        message.append(std::to_string(center.y));
-        message.append("] *");
-        logSystem->PublishMessage(message);
 
         int roomIndex(0);
         int shortestDistance(999), shortestDistanceIndex(0);
         TerrainProperties* floor = (TerrainProperties*)(&map.properties.terrainProperties.at(TerrainType::Floor));
         for(auto& room2 : map.properties.roomList) {
             if(center.x == room2.center.x && center.y == room2.center.y) { continue; }
-            message = "-- destination room: (";
-            message.append(std::to_string(room2.center.x));
-            message.append(", ");
-            message.append(std::to_string(room2.center.y));
-            message.append(") --");
-            logSystem->PublishMessage(message);
 
             Path shortestPath = distanceMap.FindPath(room2.center);
             if(shortestPath.steps.size() < shortestDistance) {

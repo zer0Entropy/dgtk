@@ -15,15 +15,6 @@ Dijkstra::Node* Dijkstra::DistanceMap::GetNode(int x, int y) {
 }
 
 void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, const Map& source) {
-    std::string message("Generating Dijkstra map...");
-    logSystem->PublishMessage(message);
-    message = "Origin: (";
-    message.append(std::to_string(originLocation.x));
-    message.append(", ");
-    message.append(std::to_string(originLocation.y));
-    message.append(")");
-    logSystem->PublishMessage(message);
-
     origin = originLocation;
     width = source.properties.width;
     height = source.properties.height;
@@ -33,90 +24,69 @@ void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, const Ma
         }
     }
     currentNode = GetNode(origin.x, origin.y);
+    currentNode->distance = 0;
     Dijkstra::DistanceMap::PopulateFrontier();
-    while(!frontier.empty()) {
-        do {
+    int nodeCount(1);
+    do {
+        PopulateFrontier();
+        if(!frontier.empty()) {
             currentNode = frontier.front();
             frontier.pop_front();
-        } while(!frontier.empty() && currentNode->distance >= 0);
-        PopulateFrontier();
-    }
+            ++nodeCount;
+        }
+    } while(!frontier.empty());
 }
 
 Path Dijkstra::DistanceMap::FindPath(const MapLocation& destination) {
-    std::string message("Finding path to destination: (");
-    message.append(std::to_string(destination.x));
-    message.append(", ");
-    message.append(std::to_string(destination.y));
-    message.append(")'");
 
     Path path;
     currentNode = GetNode(destination.x, destination.y);
-    path.steps.push_front(destination);
+    path.steps.push_front(currentNode->location);
+    path.steps.push_front(currentNode->location);
     while(currentNode->location.x != origin.x || currentNode->location.y != origin.y) {
-        PopulateAdjacent();
-        while (!adjacent.empty()) {
-            Node* adjNode = adjacent.front();
-            adjacent.pop_front();
-            if (adjNode->distance < currentNode->distance) {
-                currentNode = adjNode;
-                path.steps.push_front(currentNode->location);
-            }
-        }
+        currentNode = currentNode->previous;
+        path.steps.push_front(currentNode->location);
     }
-
-    message = "Path found successfully - [";
-    message.append(std::to_string(path.steps.size()));
-    message.append(" steps]");
-    logSystem->PublishMessage(message);
     return path;
 }
 
 void Dijkstra::DistanceMap::PopulateFrontier() {
     if(!currentNode) { return; }
-    // If currentNode->previous == nullptr, mark as origin
-    if(!currentNode->previous && currentNode->distance < 0) {
-        currentNode->distance = 0;
-    } else {
-        if (currentNode->previous) {
-            currentNode->distance = currentNode->previous->distance + 1;
-        }
-    }
-    PopulateAdjacent();
-    while(!adjacent.empty()) {
-        Node* adjNode(adjacent.front());
-        adjacent.pop_front();
-        if(adjNode->distance < 0) {
-            adjNode->previous = currentNode;
-            frontier.push_back(adjNode);
-        }
-    }
-}
-
-void Dijkstra::DistanceMap::PopulateAdjacent() {
-    if(!currentNode) { return; }
     MapLocation location(currentNode->location);
-    // LOOK LEFT
+
     if(location.x > 0) {
-        Node* left = &nodeMap[location.y][location.x - 1];
-        adjacent.push_back(left);
-    } // LOOK LEFT
+        Node& left(nodeMap[location.y][location.x - 1]);
+        if(left.distance < 0) {
+            left.previous = currentNode;
+            left.distance = currentNode->distance + 1;
+            frontier.push_back(&left);
+        }
+    } // LEFT
 
-    // LOOK RIGHT
     if(location.x < width - 1) {
-        Node* right = &nodeMap[location.y][location.x + 1];
-        adjacent.push_back(right);
-    } // LOOK RIGHT
+        Node& right(nodeMap[location.y][location.x + 1]);
+        if(right.distance < 0) {
+            right.previous = currentNode;
+            right.distance = currentNode->distance + 1;
+            frontier.push_back(&right);
+        }
+    } // RIGHT
 
-    // LOOK UP
     if(location.y > 0) {
-        Node* up = &nodeMap[location.y - 1][location.x];
-        adjacent.push_back(up);
-    } // LOOK UP
+        Node& up(nodeMap[location.y - 1][location.x]);
+        if(up.distance < 0) {
+            up.previous = currentNode;
+            up.distance = currentNode->distance + 1;
+            frontier.push_back(&up);
+        }
+    } // UP
 
-    // LOOK DOWN
     if(location.y < height - 1) {
-        Node* down = &nodeMap[location.y + 1][location.x];
-        adjacent.push_back(down);
-    } // LOOK DOWN
+        Node& down(nodeMap[location.y + 1][location.x]);
+        if(down.distance < 0) {
+            down.previous = currentNode;
+            down.distance = currentNode->distance + 1;
+            frontier.push_back(&down);
+        }
+    } // DOWN
 }

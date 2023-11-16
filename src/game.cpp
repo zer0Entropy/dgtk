@@ -215,12 +215,13 @@ void Game::TransitionTo(Scene* scene) {
             if(possibleRoom.width > 4 && possibleRoom.height > 4) {
                 scene->map->properties.roomList.push_back(Room{
                         {possibleRoom.left, possibleRoom.top},
-                        {(possibleRoom.left + possibleRoom.width) / 2, (possibleRoom.top + possibleRoom.height) / 2},
+                        {possibleRoom.left + (possibleRoom.width / 2), possibleRoom.top + (possibleRoom.height / 2)},
                             possibleRoom.width,
                             possibleRoom.height,
                             false });
             }
         }
+
 
         GenerateMap(scene->map.get(), displayConfig);
         CreateHallways(*scene->map.get(), GetLogSystem());

@@ -32,7 +32,6 @@ namespace Dijkstra {
       Path                  FindPath(const MapLocation& destination);
   private:
       void                  PopulateFrontier();
-      void                  PopulateAdjacent();
 
       LogSystem*            logSystem;
       MapLocation           origin;

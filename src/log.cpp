@@ -9,8 +9,8 @@ LogSystem::LogSystem(const std::filesystem::path& logDirectory):
     std::string errorPath(logDirectory);
     logPath.append("/log.txt");
     errorPath.append("/error.txt");
-    primaryLogFile.open(logPath, std::ios_base::out);
-    errorLogFile.open(errorPath, std::ios_base::out);
+    primaryLogFile.open(logPath, std::ios_base::out | std::ios_base::trunc);
+    errorLogFile.open(errorPath, std::ios_base::out | std::ios_base::trunc);
 }
 
 LogSystem::~LogSystem() {
