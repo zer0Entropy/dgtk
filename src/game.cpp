@@ -202,13 +202,16 @@ void Game::TransitionTo(Scene* scene) {
                 scene->map->properties.width,
                 scene->map->properties.height
         };
-        int minWidth(5);
-        int minHeight(6);
-        int maxWidth(7);
-        int maxHeight(9);
+        int minWidth(4);
+        int minHeight(5);
+        float minRatio(0.5);
+        float maxRatio(0.55);
+        //int maxWidth(7);
+        //int maxHeight(9);
         BSP::Tree bspTree(rng);
         bspTree.CreateRootNode(area);
-        bspTree.Split(minWidth, minHeight, maxWidth, maxHeight);
+        bspTree.Split(minRatio, maxRatio, minWidth, minHeight);
+        //bspTree.Split(minWidth, minHeight, maxWidth, maxHeight);
         auto areaList = bspTree.GetLeafValues();
 
         for(auto possibleRoom : areaList) {

@@ -29,14 +29,21 @@ std::vector<BSP::Node*> BSP::Tree::GetLeafList() {
 int BSP::Tree::GetLeafCount() const {
     return GetLeafCount(root);
 }
-
+/*
 void BSP::Tree::Split(int minWidth, int minHeight, int maxWidth, int maxHeight) {
     Split(root, minWidth, minHeight, maxWidth, maxHeight);
 }
+*/
+
+
 
 void BSP::Tree::CreateRootNode(sf::IntRect rect) {
     root = new BSP::Node;
     root->rect = rect;
+}
+
+void BSP::Tree::Split(float minRatio, float maxRatio, int minWidth, int minHeight) {
+    Split(root, minRatio, maxRatio, minWidth, minHeight);
 }
 
 BSP::Node* BSP::Tree::CreateNode(sf::IntRect rect) {
@@ -70,6 +77,48 @@ int BSP::Tree::GetLeafCount(BSP::Node* rootPtr) const {
     return leafCount;
 }
 
+void BSP::Tree::Split(BSP::Node* rootPtr, float minRatio, float maxRatio, int minWidth, int minHeight) {
+    if(rootPtr->rect.width < (minWidth * 2) || rootPtr->rect.height < (minHeight * 2)) {
+        return;
+    }
+
+    BSP::SplitDirection splitDirection( BSP::SplitDirection::Horizontal );
+    // Splitting horizontally increases this ratio; splitting vertically decreases it.
+    float currentRatio = rootPtr->rect.width / rootPtr->rect.height;
+
+    if(currentRatio >= maxRatio) {
+        splitDirection = BSP::SplitDirection::Vertical;
+    } else {
+        splitDirection = BSP::SplitDirection::Horizontal;
+    }
+
+    sf::IntRect leftRect, rightRect;
+    switch(splitDirection) {
+        case BSP::SplitDirection::Horizontal: {
+            int height = minHeight + rng.GetRandom(0, rootPtr->rect.height - minHeight);
+            leftRect = {
+                    rootPtr->rect.left, rootPtr->rect.top, rootPtr->rect.width, height
+            };
+            rightRect = {
+                    rootPtr->rect.left, rootPtr->rect.top + height, rootPtr->rect.width, rootPtr->rect.height - height
+            };
+            break; }
+        case BSP::SplitDirection::Vertical: {
+            int width = minWidth + rng.GetRandom(0, rootPtr->rect.width - minWidth);
+            leftRect = {
+                    rootPtr->rect.left, rootPtr->rect.top, width, rootPtr->rect.height
+            };
+            rightRect = {
+                    rootPtr->rect.left + width, rootPtr->rect.top, rootPtr->rect.width - width, rootPtr->rect.height
+            };
+            break; }
+    }
+    rootPtr->leftChild = CreateNode(leftRect);
+    rootPtr->rightChild = CreateNode(rightRect);
+    Split(rootPtr->leftChild, minRatio, maxRatio, minWidth, minHeight);
+    Split(rootPtr->rightChild, minRatio, maxRatio, minWidth, minHeight);
+}
+/*
 void BSP::Tree::Split(BSP::Node* rootPtr, int minWidth, int minHeight, int maxWidth, int maxHeight) {
 
     BSP::SplitDirection splitDirection( BSP::SplitDirection::Horizontal );
@@ -114,3 +163,4 @@ void BSP::Tree::Split(BSP::Node* rootPtr, int minWidth, int minHeight, int maxWi
         Split(rootPtr->rightChild, minWidth, minHeight, maxWidth, maxHeight);
     }
 }
+*/
