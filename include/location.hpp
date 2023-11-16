@@ -18,7 +18,6 @@ struct Room {
     MapLocation center;
     int width;
     int height;
-    bool isConnected;
 };
 
 #endif //DGTKPROJECT_LOCATION_HPP

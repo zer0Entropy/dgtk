@@ -206,11 +206,19 @@ void Game::TransitionTo(Scene* scene) {
         int minHeight(5);
         float minRatio(0.5);
         float maxRatio(0.55);
-        //int maxWidth(7);
-        //int maxHeight(9);
+        int maxWidth(15);
+        int maxHeight(12);
         BSP::Tree bspTree(rng);
         bspTree.CreateRootNode(area);
-        bspTree.Split(minRatio, maxRatio, minWidth, minHeight);
+        int tallestRoom(0);
+        int widestRoom(0);
+        do {
+            bspTree.Split(minRatio, maxRatio, minWidth, minHeight);
+            bspTree.GetLeafList();
+            widestRoom = bspTree.GetMaxNodeWidth();
+            tallestRoom = bspTree.GetMaxNodeHeight();
+        } while(widestRoom > maxWidth || tallestRoom > maxHeight);
+
         //bspTree.Split(minWidth, minHeight, maxWidth, maxHeight);
         auto areaList = bspTree.GetLeafValues();
 
@@ -220,11 +228,9 @@ void Game::TransitionTo(Scene* scene) {
                         {possibleRoom.left, possibleRoom.top},
                         {possibleRoom.left + (possibleRoom.width / 2), possibleRoom.top + (possibleRoom.height / 2)},
                             possibleRoom.width,
-                            possibleRoom.height,
-                            false });
+                            possibleRoom.height });
             }
         }
-
 
         GenerateMap(scene->map.get(), displayConfig);
         CreateHallways(*scene->map.get(), GetLogSystem());

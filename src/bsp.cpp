@@ -26,9 +26,6 @@ std::vector<BSP::Node*> BSP::Tree::GetLeafList() {
     return leafList;
 }
 
-int BSP::Tree::GetLeafCount() const {
-    return GetLeafCount(root);
-}
 /*
 void BSP::Tree::Split(int minWidth, int minHeight, int maxWidth, int maxHeight) {
     Split(root, minWidth, minHeight, maxWidth, maxHeight);
@@ -63,18 +60,24 @@ void BSP::Tree::CreateLeafList(BSP::Node* rootPtr) {
     CreateLeafList(rootPtr->rightChild);
 }
 
-int BSP::Tree::GetLeafCount(BSP::Node* rootPtr) const {
-    int leafCount(0);
-    if(!rootPtr) { return leafCount; }
-
-    if(!rootPtr->leftChild && !rootPtr->rightChild) {
-        return 1;
+int BSP::Tree::GetMaxNodeWidth() {
+    int maxWidth(0);
+    for(auto& leaf : leafList) {
+        if(leaf->rect.width > maxWidth) {
+            maxWidth = leaf->rect.width;
+        }
     }
+    return maxWidth;
+}
 
-    leafCount += GetLeafCount(rootPtr->leftChild);
-    leafCount += GetLeafCount(rootPtr->rightChild);
-
-    return leafCount;
+int BSP::Tree::GetMaxNodeHeight() {
+    int maxHeight(0);
+    for(auto& leaf : leafList) {
+        if(leaf->rect.height > maxHeight) {
+            maxHeight = leaf->rect.height;
+        }
+    }
+    return maxHeight;
 }
 
 void BSP::Tree::Split(BSP::Node* rootPtr, float minRatio, float maxRatio, int minWidth, int minHeight) {

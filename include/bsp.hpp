@@ -29,7 +29,8 @@ namespace BSP {
 
         std::vector<sf::IntRect>    GetLeafValues();
         std::vector<Node*>          GetLeafList();
-        int                         GetLeafCount() const;
+        int                         GetMaxNodeWidth();
+        int                         GetMaxNodeHeight();
         //void                        Split(int minWidth, int minHeight, int maxWidth, int maxHeight);
         void                        Split(float minRatio, float maxRatio, int minWidth, int minHeight);
         void                        CreateRootNode(sf::IntRect rect);

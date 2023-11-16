@@ -14,10 +14,10 @@ Dijkstra::Node* Dijkstra::DistanceMap::GetNode(int x, int y) {
     return nullptr;
 }
 
-void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, const Map& source) {
+void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, int mapWidth, int mapHeight) {
     origin = originLocation;
-    width = source.properties.width;
-    height = source.properties.height;
+    width = mapWidth;
+    height = mapHeight;
     for(int y = 0; y < height; ++y) {
         for(int x = 0; x < width; ++x) {
             nodeMap[y][x].location = MapLocation{x, y};
