@@ -169,7 +169,8 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
     } // y
 
     // Second pass: change each tile within a Room into Floor
-    for(const auto& room : map->properties.roomList) {
+    for(const auto& roomKeyValuePair : map->properties.roomList) {
+        const Room& room(roomKeyValuePair.second);
         const MapLocation& topLeft(room.topLeft);
         for(int y = topLeft.y + 1; y < topLeft.y + room.height - 1; ++y) {
             for(int x = topLeft.x + 1; x < topLeft.x + room.width - 1; ++x) {
@@ -202,36 +203,55 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
 
 }
 
-void CreateHallways(Map& map, LogSystem* logSystem) {
-    std::map<int, Path> roomPaths;
+Path CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const MapLocation& origin, const MapLocation& destination) {
+    TerrainProperties* floor = (TerrainProperties*)(&map.properties.terrainProperties.at(TerrainType::Floor));
+    Path hallway = distanceMap.FindPath(destination);
+    for(MapLocation& step : hallway.steps) {
+        map.tileArray[step.y][step.x].terrain = floor;
+        map.tileArray[step.y][step.x].sprite->setTexture(*floor->texture);
+    }
+    return hallway;
+}
 
-    for(auto& room : map.properties.roomList) {
-        Dijkstra::DistanceMap distanceMap(logSystem);
-        MapLocation center = room.center;
-        distanceMap.Generate(center, map.properties.width, map.properties.height);
-        roomPaths.clear();
-
-        int roomIndex(0);
-        int shortestDistance(999), shortestDistanceIndex(0);
+void CreateHallways(Map& map) {
+    for(auto& roomKeyValuePair : map.properties.roomList) {
+        UniqueID roomID(roomKeyValuePair.first);
+        Room& room(roomKeyValuePair.second);
+        int shortestDistance(999);
+        UniqueID nearestRoomID("");
         TerrainProperties* floor = (TerrainProperties*)(&map.properties.terrainProperties.at(TerrainType::Floor));
-        for(auto& room2 : map.properties.roomList) {
-            if(center.x == room2.center.x && center.y == room2.center.y) { continue; }
 
-            Path shortestPath = distanceMap.FindPath(room2.center);
-            if(shortestPath.steps.size() < shortestDistance) {
-                shortestDistance = shortestPath.steps.size();
-                shortestDistanceIndex = roomIndex;
+        Dijkstra::DistanceMap distanceMap;
+        Path path;
+        distanceMap.Generate(room.center, map.properties.width, map.properties.height);
+        for(auto& room2KeyValuePair : map.properties.roomList) {
+            UniqueID room2ID(room2KeyValuePair.first);
+            Room& room2(room2KeyValuePair.second);
+            if(room.center.x == room2.center.x && room.center.y == room2.center.y) { continue; }
+
+            path = distanceMap.FindPath(room2.center);
+            room.pathsToOtherRooms.insert(std::make_pair(room2ID, path));
+            if(path.steps.size() < shortestDistance) {
+                shortestDistance = path.steps.size();
+                nearestRoomID = room2ID;
             }
-            roomPaths.insert(std::make_pair(roomIndex++, shortestPath));
         } // room2
 
-        Path shortestPath = roomPaths.at(shortestDistanceIndex);
-        while(!shortestPath.steps.empty()) {
-            MapLocation location(shortestPath.steps.front());
-            shortestPath.steps.pop_front();
-            map.tileArray[location.y][location.x].terrain = floor;
-            map.tileArray[location.y][location.x].sprite->setTexture(*floor->texture);
-        }
+        Path hallway = CreateHallway(map, distanceMap, room.center, map.properties.roomList.at(nearestRoomID).center);
+        map.properties.hallwayList.push_back(hallway);
     } // room
+}
 
+bool DoesPathContain(const Map& map, const Path& path, TerrainType terrain) {
+    bool containsTerrain(false);
+
+    for(auto pathIter = path.steps.begin(); !containsTerrain && pathIter != path.steps.end(); ++pathIter) {
+        const MapLocation location(*pathIter);
+        const Tile& tile(map.tileArray[location.y][location.x]);
+        if(tile.terrain->terrainType == terrain) {
+            containsTerrain = true;
+        }
+    }
+
+    return containsTerrain;
 }

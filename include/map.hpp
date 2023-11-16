@@ -30,6 +30,15 @@ struct Tile {
     Creature*                       creature;
 };
 
+struct Room {
+    UniqueID id;
+    MapLocation topLeft;
+    MapLocation center;
+    int width;
+    int height;
+    std::map<UniqueID, Path> pathsToOtherRooms;
+};
+
 struct TilePlacementStrategy {
     TerrainType     defaultTerrainType;
     TerrainType     edges[(int)Direction::TotalNumCardinalDirections];
@@ -69,16 +78,16 @@ const std::vector<std::string> MapPropertyNames = {
 };
 
 struct MapProperties {
-    std::string     name;
-    int             width;
-    int             height;
-    std::string     texturePath;
-    int             textureWidth;
-    int             textureHeight;
-    TilePlacementStrategy   strategy;
+    std::string                             name;
+    int                                     width;
+    int                                     height;
+    std::string                             texturePath;
+    int                                     textureWidth;
+    int                                     textureHeight;
+    TilePlacementStrategy                   strategy;
     std::map<TerrainType,TerrainProperties> terrainProperties;
-    std::vector<Room>       roomList;
-    std::vector<Room>       hallwayList;
+    std::map<UniqueID, Room>                roomList;
+    std::vector<Path>                       hallwayList;
 };
 
 struct Map {
@@ -91,6 +100,13 @@ nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties);
 
 void GenerateMap(Map* map, const DisplayConfig& displayConfig);
 
-void CreateHallways(Map& map, LogSystem* logSystem);
+namespace Dijkstra {
+    class DistanceMap;
+};
+
+Path CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const MapLocation& origin, const MapLocation& destination);
+void CreateHallways(Map& map);
+
+bool DoesPathContain(const Map& map, const Path& path, TerrainType terrain);
 
 #endif //DGTKPROJECT_MAP_HPP

@@ -25,17 +25,17 @@ namespace Dijkstra {
 
   class DistanceMap {
   public:
-      DistanceMap(LogSystem* logSystemPtr);
+      DistanceMap();
       DistanceMap(const DistanceMap& copy) = default;
       ~DistanceMap() = default;
 
-      Node*                 GetNode(int x, int y);
+      const MapLocation&    GetOrigin() const;
+      Node*                 GetNode(int x, int y) const;
       void                  Generate(const MapLocation& originLocation, int mapWidth, int mapHeight);
       Path                  FindPath(const MapLocation& destination);
   private:
       void                  PopulateFrontier();
 
-      LogSystem*            logSystem;
       MapLocation           origin;
       Node*                 currentNode;
       std::deque<Node*>     frontier;

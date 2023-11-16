@@ -3,13 +3,17 @@
 //
 #include "../include/dijkstra.hpp"
 
-Dijkstra::DistanceMap::DistanceMap(LogSystem* logSystemPtr): logSystem(logSystemPtr) {
+Dijkstra::DistanceMap::DistanceMap() {
 
 }
 
-Dijkstra::Node* Dijkstra::DistanceMap::GetNode(int x, int y) {
+const MapLocation& Dijkstra::DistanceMap::GetOrigin() const {
+    return origin;
+}
+
+Dijkstra::Node* Dijkstra::DistanceMap::GetNode(int x, int y) const {
     if(x >= 0 && x < width && y >= 0 && y < height) {
-        return &nodeMap[y][x];
+        return (Dijkstra::Node*)&nodeMap[y][x];
     }
     return nullptr;
 }

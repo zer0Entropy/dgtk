@@ -219,21 +219,24 @@ void Game::TransitionTo(Scene* scene) {
             tallestRoom = bspTree.GetMaxNodeHeight();
         } while(widestRoom > maxWidth || tallestRoom > maxHeight);
 
-        //bspTree.Split(minWidth, minHeight, maxWidth, maxHeight);
         auto areaList = bspTree.GetLeafValues();
 
+        int roomIndex(0);
         for(auto possibleRoom : areaList) {
             if(possibleRoom.width > 4 && possibleRoom.height > 4) {
-                scene->map->properties.roomList.push_back(Room{
-                        {possibleRoom.left, possibleRoom.top},
-                        {possibleRoom.left + (possibleRoom.width / 2), possibleRoom.top + (possibleRoom.height / 2)},
-                            possibleRoom.width,
-                            possibleRoom.height });
+                UniqueID roomID("Room#");
+                roomID.append(std::to_string(roomIndex++));
+                scene->map->properties.roomList.insert(std::make_pair( roomID, Room{
+                        .id = roomID,
+                        .topLeft = {possibleRoom.left, possibleRoom.top},
+                        .center = {possibleRoom.left + (possibleRoom.width / 2), possibleRoom.top + (possibleRoom.height / 2)},
+                        .width = possibleRoom.width,
+                        .height = possibleRoom.height }));
             }
         }
 
         GenerateMap(scene->map.get(), displayConfig);
-        CreateHallways(*scene->map.get(), GetLogSystem());
+        CreateHallways(*scene->map.get());
 
         UniqueID playerName("Player1");
         sf::Texture* playerTexture(nullptr);
