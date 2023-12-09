@@ -235,8 +235,7 @@ void Game::TransitionTo(Scene* scene) {
             }
         }
 
-        GenerateMap(scene->map.get(), displayConfig);
-        CreateHallways(*scene->map.get());
+        GenerateMap(*scene->map.get(), rng, displayConfig);
 
         UniqueID playerName("Player1");
         sf::Texture* playerTexture(nullptr);

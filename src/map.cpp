@@ -1,6 +1,7 @@
 //
 // Created by zeroc00l on 11/6/23.
 //
+#include <cmath>
 #include <SFML/Graphics/Sprite.hpp>
 #include "../include/map.hpp"
 #include "../include/game.hpp"
@@ -157,8 +158,8 @@ nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties) {
     return mapJSON;
 }
 
-void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
-    const MapProperties& properties(map->properties);
+void GenerateMap(Map& map, RandomNumberGenerator& rng, const DisplayConfig& displayConfig) {
+    const MapProperties& properties(map.properties);
     TerrainType terrainMap[properties.height][properties.width];
 
     // First pass: make everything a Wall
@@ -169,7 +170,7 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
     } // y
 
     // Second pass: change each tile within a Room into Floor
-    for(const auto& roomKeyValuePair : map->properties.roomList) {
+    for(const auto& roomKeyValuePair : map.properties.roomList) {
         const Room& room(roomKeyValuePair.second);
         const MapLocation& topLeft(room.topLeft);
         for(int y = topLeft.y + 1; y < topLeft.y + room.height - 1; ++y) {
@@ -179,17 +180,15 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
         } // y
     } // for each Room
 
-    TerrainProperties& floor(map->properties.terrainProperties.at(TerrainType::Floor));
-    TerrainProperties& wall(map->properties.terrainProperties.at(TerrainType::Wall));
     float scaleX = displayConfig.tileScaleX;
     float scaleY = displayConfig.tileScaleY;
 
     // Final pass: create a Tile at each MapLocation, create its Sprite & set properties
     for(int y = 0; y < properties.height; ++y) {
         for(int x = 0; x < properties.width; ++x) {
-            Tile& tile( map->tileArray[y][x] );
+            Tile& tile( map.tileArray[y][x] );
             TerrainType terrainType = terrainMap[y][x];
-            tile.terrain = &map->properties.terrainProperties.at(terrainType);
+            tile.terrain = &map.properties.terrainProperties.at(terrainType);
             tile.sprite.reset(new sf::Sprite);
             tile.sprite->setTexture(*tile.terrain->texture);
             tile.sprite->setScale(scaleX, scaleY);
@@ -201,57 +200,79 @@ void GenerateMap(Map* map, const DisplayConfig& displayConfig) {
         }
     }
 
+    Room hub = FindCenterRoom(map);
+    std::vector<std::pair<int,UniqueID>> distanceFromHubList;
+    for(const auto& roomKVPair: map.properties.roomList) {
+        const Room& room(roomKVPair.second);
+        if(roomKVPair.first.compare(hub.id) == 0) {
+            continue;
+        }
+        int distanceFromHub = pow(room.center.x - hub.center.x, 2) + pow(room.center.y - hub.center.y, 2);
+        distanceFromHub = sqrt(distanceFromHub);
+        distanceFromHubList.push_back(std::make_pair(distanceFromHub, roomKVPair.first));
+    }
+
+    std::make_heap(distanceFromHubList.begin(), distanceFromHubList.end());
+    std::sort_heap(distanceFromHubList.begin(), distanceFromHubList.end());
+
+    Dijkstra::WeightedDistanceMap walkingMap;
+    walkingMap.InitWeights(map);
+    walkingMap.Generate(hub.center, map.properties.width, map.properties.height);
+
+    for(const auto& distancePair : distanceFromHubList) {
+        UniqueID targetID = distancePair.second;
+        const Room& targetRoom = GetRoom(map, targetID);
+        Hallway hallway = CreateHallway(map, walkingMap, hub, targetRoom);
+        for(const auto& step : hallway.path.steps) {
+            Tile& tile(map.tileArray[step.y][step.x]);
+            tile.terrain = &map.properties.terrainProperties.at(TerrainType::Floor);
+            tile.sprite->setTexture(*tile.terrain->texture);
+            tile.sprite->setScale(scaleX, scaleY);
+        }
+        map.properties.hallwayList.push_back(hallway);
+    }
 }
 
-Path CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const MapLocation& origin, const MapLocation& destination) {
-    TerrainProperties* floor = (TerrainProperties*)(&map.properties.terrainProperties.at(TerrainType::Floor));
-    Path hallway = distanceMap.FindPath(destination);
-    for(MapLocation& step : hallway.steps) {
-        map.tileArray[step.y][step.x].terrain = floor;
-        map.tileArray[step.y][step.x].sprite->setTexture(*floor->texture);
-    }
+Hallway CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const Room& origin, const Room& destination) {
+    Hallway hallway = {
+      .origin = (Room*)&origin,
+      .destination = (Room*)&destination,
+      .path = distanceMap.FindPath(destination.center)
+    };
     return hallway;
 }
 
-void CreateHallways(Map& map) {
-    for(auto& roomKeyValuePair : map.properties.roomList) {
-        UniqueID roomID(roomKeyValuePair.first);
-        Room& room(roomKeyValuePair.second);
-        int shortestDistance(999);
-        UniqueID nearestRoomID("");
-        TerrainProperties* floor = (TerrainProperties*)(&map.properties.terrainProperties.at(TerrainType::Floor));
+Room FindCenterRoom(const Map& map) {
+    MapLocation center = {
+            map.properties.width / 2,
+            map.properties.height / 2
+    };
 
-        Dijkstra::DistanceMap distanceMap;
-        Path path;
-        distanceMap.Generate(room.center, map.properties.width, map.properties.height);
-        for(auto& room2KeyValuePair : map.properties.roomList) {
-            UniqueID room2ID(room2KeyValuePair.first);
-            Room& room2(room2KeyValuePair.second);
-            if(room.center.x == room2.center.x && room.center.y == room2.center.y) { continue; }
+    std::pair<int,UniqueID> leastDistantRoom{
+        999,
+        ""
+    };
 
-            path = distanceMap.FindPath(room2.center);
-            room.pathsToOtherRooms.insert(std::make_pair(room2ID, path));
-            if(path.steps.size() < shortestDistance) {
-                shortestDistance = path.steps.size();
-                nearestRoomID = room2ID;
-            }
-        } // room2
-
-        Path hallway = CreateHallway(map, distanceMap, room.center, map.properties.roomList.at(nearestRoomID).center);
-        map.properties.hallwayList.push_back(hallway);
-    } // room
-}
-
-bool DoesPathContain(const Map& map, const Path& path, TerrainType terrain) {
-    bool containsTerrain(false);
-
-    for(auto pathIter = path.steps.begin(); !containsTerrain && pathIter != path.steps.end(); ++pathIter) {
-        const MapLocation location(*pathIter);
-        const Tile& tile(map.tileArray[location.y][location.x]);
-        if(tile.terrain->terrainType == terrain) {
-            containsTerrain = true;
+    for(auto& roomKVPair: map.properties.roomList) {
+        const Room& room = roomKVPair.second;
+        int distanceToCenter = pow(room.center.x - center.x, 2) + pow(room.center.y - center.y, 2);
+        distanceToCenter = sqrt(distanceToCenter);
+        if(distanceToCenter < leastDistantRoom.first) {
+            leastDistantRoom.first = distanceToCenter;
+            leastDistantRoom.second = roomKVPair.first;
         }
     }
 
-    return containsTerrain;
+    return GetRoom(map, leastDistantRoom.second);
+}
+
+Room GetRoom(const Map& map, UniqueID roomID) {
+    Room findRoom;
+    for(auto& roomKVPair: map.properties.roomList) {
+        if(roomKVPair.first.compare(roomID) == 0) {
+            findRoom = roomKVPair.second;
+            break;
+        }
+    }
+    return findRoom;
 }

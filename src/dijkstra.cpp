@@ -2,6 +2,7 @@
 // Created by zeroc00l on 11/13/23.
 //
 #include "../include/dijkstra.hpp"
+#include "../include/map.hpp"
 
 Dijkstra::DistanceMap::DistanceMap() {
 
@@ -90,6 +91,60 @@ void Dijkstra::DistanceMap::PopulateFrontier() {
         if(down.distance < 0) {
             down.previous = currentNode;
             down.distance = currentNode->distance + 1;
+            frontier.push_back(&down);
+        }
+    } // DOWN
+}
+
+void Dijkstra::WeightedDistanceMap::InitWeights(const Map& map) {
+    for(int y = 0; y < map.properties.height; ++y) {
+        for(int x = 0; x < map.properties.width; ++x) {
+            const Tile& tile(map.tileArray[y][x]);
+            if(tile.terrain->isWalkable) {
+                nodeWeights[y][x] = floorWeight;
+            } else {
+                nodeWeights[y][x] = wallWeight;
+            }
+        } // x
+    } // y
+}
+
+void Dijkstra::WeightedDistanceMap::PopulateFrontier() {
+    if(!currentNode) { return; }
+    MapLocation location(currentNode->location);
+
+    if(location.x > 0) {
+        Node& left(nodeMap[location.y][location.x - 1]);
+        if(left.distance < 0) {
+            left.previous = currentNode;
+            left.distance = currentNode->distance + nodeWeights[left.location.y][left.location.x];
+            frontier.push_back(&left);
+        }
+    } // LEFT
+
+    if(location.x < width - 1) {
+        Node& right(nodeMap[location.y][location.x + 1]);
+        if(right.distance < 0) {
+            right.previous = currentNode;
+            right.distance = currentNode->distance + nodeWeights[right.location.y][right.location.x];
+            frontier.push_back(&right);
+        }
+    } // RIGHT
+
+    if(location.y > 0) {
+        Node& up(nodeMap[location.y - 1][location.x]);
+        if(up.distance < 0) {
+            up.previous = currentNode;
+            up.distance = currentNode->distance + nodeWeights[up.location.y][up.location.x];
+            frontier.push_back(&up);
+        }
+    } // UP
+
+    if(location.y < height - 1) {
+        Node& down(nodeMap[location.y + 1][location.x]);
+        if(down.distance < 0) {
+            down.previous = currentNode;
+            down.distance = currentNode->distance + nodeWeights[down.location.y][down.location.x];
             frontier.push_back(&down);
         }
     } // DOWN

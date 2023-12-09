@@ -36,7 +36,12 @@ struct Room {
     MapLocation center;
     int width;
     int height;
-    std::map<UniqueID, Path> pathsToOtherRooms;
+};
+
+struct Hallway {
+    Room* origin;
+    Room* destination;
+    Path path;
 };
 
 struct TilePlacementStrategy {
@@ -87,7 +92,7 @@ struct MapProperties {
     TilePlacementStrategy                   strategy;
     std::map<TerrainType,TerrainProperties> terrainProperties;
     std::map<UniqueID, Room>                roomList;
-    std::vector<Path>                       hallwayList;
+    std::vector<Hallway>                    hallwayList;
 };
 
 struct Map {
@@ -98,15 +103,16 @@ struct Map {
 MapProperties ReadMapPropertiesFromJSON(const nlohmann::json& jsonDoc, Game* game);
 nlohmann::json WriteMapPropertiesToJSON(const MapProperties& mapProperties);
 
-void GenerateMap(Map* map, const DisplayConfig& displayConfig);
+void GenerateMap(Map& map, RandomNumberGenerator& rng, const DisplayConfig& displayConfig);
 
 namespace Dijkstra {
     class DistanceMap;
 };
 
-Path CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const MapLocation& origin, const MapLocation& destination);
-void CreateHallways(Map& map);
+Hallway CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const Room& origin, const Room& destination);
 
-bool DoesPathContain(const Map& map, const Path& path, TerrainType terrain);
+Room FindCenterRoom(const Map& map);
+
+Room GetRoom(const Map& map, UniqueID roomID);
 
 #endif //DGTKPROJECT_MAP_HPP

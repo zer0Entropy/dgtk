@@ -9,6 +9,8 @@
 #ifndef DGTKPROJECT_DIJKSTRA_HPP
 #define DGTKPROJECT_DIJKSTRA_HPP
 
+class Map;
+
 namespace Dijkstra {
 
   struct Node {
@@ -24,6 +26,7 @@ namespace Dijkstra {
   constexpr int MaxHeight(100);
 
   class DistanceMap {
+
   public:
       DistanceMap();
       DistanceMap(const DistanceMap& copy) = default;
@@ -33,8 +36,9 @@ namespace Dijkstra {
       Node*                 GetNode(int x, int y) const;
       void                  Generate(const MapLocation& originLocation, int mapWidth, int mapHeight);
       Path                  FindPath(const MapLocation& destination);
-  private:
-      void                  PopulateFrontier();
+
+  protected:
+      virtual void          PopulateFrontier();
 
       MapLocation           origin;
       Node*                 currentNode;
@@ -43,6 +47,17 @@ namespace Dijkstra {
       int                   width;
       int                   height;
       Node                  nodeMap[MaxHeight][MaxWidth];
+  };
+
+  class WeightedDistanceMap: public DistanceMap {
+  public:
+      void                  InitWeights(const Map& map);
+  private:
+      void                  PopulateFrontier() override;
+      int                   nodeWeights[MaxHeight][MaxWidth];
+      static constexpr int  floorWeight{1};
+      static constexpr int  wallWeight{99};
+
   };
 
 };
