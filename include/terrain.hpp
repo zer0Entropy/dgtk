@@ -44,6 +44,7 @@ struct TerrainProperties {
     std::string                     name;
     TerrainType                     terrainType;
     bool                            isWalkable;
+    bool                            isTransparent;
     Position                        texturePosition;
     sf::Texture*                    texture;
 };

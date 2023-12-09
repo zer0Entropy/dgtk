@@ -216,7 +216,7 @@ void GenerateMap(Map& map, RandomNumberGenerator& rng, const DisplayConfig& disp
     std::sort_heap(distanceFromHubList.begin(), distanceFromHubList.end());
 
     Dijkstra::WeightedDistanceMap walkingMap;
-    walkingMap.InitWeights(map);
+    walkingMap.InitWeightsByWalkability(map);
     walkingMap.Generate(hub.center, map.properties.width, map.properties.height);
 
     for(const auto& distancePair : distanceFromHubList) {

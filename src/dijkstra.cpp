@@ -96,11 +96,24 @@ void Dijkstra::DistanceMap::PopulateFrontier() {
     } // DOWN
 }
 
-void Dijkstra::WeightedDistanceMap::InitWeights(const Map& map) {
+void Dijkstra::WeightedDistanceMap::InitWeightsByWalkability(const Map& map) {
     for(int y = 0; y < map.properties.height; ++y) {
         for(int x = 0; x < map.properties.width; ++x) {
             const Tile& tile(map.tileArray[y][x]);
             if(tile.terrain->isWalkable) {
+                nodeWeights[y][x] = floorWeight;
+            } else {
+                nodeWeights[y][x] = wallWeight;
+            }
+        } // x
+    } // y
+}
+
+void Dijkstra::WeightedDistanceMap::InitWeightsByVisibility(const Map& map) {
+    for(int y = 0; y < map.properties.height; ++y) {
+        for(int x = 0; x < map.properties.width; ++x) {
+            const Tile& tile(map.tileArray[y][x]);
+            if(tile.terrain->isTransparent) {
                 nodeWeights[y][x] = floorWeight;
             } else {
                 nodeWeights[y][x] = wallWeight;

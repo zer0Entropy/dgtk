@@ -51,7 +51,9 @@ namespace Dijkstra {
 
   class WeightedDistanceMap: public DistanceMap {
   public:
-      void                  InitWeights(const Map& map);
+      void                  InitWeightsByWalkability(const Map& map);
+      void                  InitWeightsByVisibility(const Map& map);
+
   private:
       void                  PopulateFrontier() override;
       int                   nodeWeights[MaxHeight][MaxWidth];
