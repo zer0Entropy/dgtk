@@ -124,7 +124,7 @@ void DisplaySystem::DrawView(const MapView& view, const Map& map) {
         for(int x = left; x < left + viewProperties.widthInTiles; ++x) {
             const Tile& tile(map.tileArray[y][x]);
             sf::Sprite* sprite(tile.sprite.get());
-            if(sprite != nullptr) {
+            if(sprite != nullptr && tile.isVisible) {
                 sprite->setPosition((x - left) * tileWidth, (y - top) * tileHeight);
                 window->draw(*tile.sprite);
                 if (tile.creature) {

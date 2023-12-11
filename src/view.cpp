@@ -77,3 +77,38 @@ void CenterViewOnPlayer(MapView& view, const Map& map, MapLocation playerLocatio
     }
     view.properties.centerLocation = center;
 }
+
+void InitVisibilityMap(const Map& map, Dijkstra::WeightedDistanceMap& visibilityMap) {
+    visibilityMap.InitWeightsByVisibility(map);
+}
+
+void UpdateVisibilityMap(Map& map, Dijkstra::WeightedDistanceMap& visibilityMap, const MapLocation& center) {
+    visibilityMap.Generate(center, map.properties.width, map.properties.height);
+    for(int y = 0; y < map.properties.height; ++y) {
+        for(int x = 0; x < map.properties.width; ++x) {
+            Tile& tile(map.tileArray[y][x]);
+            int visibility = visibilityMap.GetNode(x, y)->distance;
+            if( visibility <= VisibilityThreshold ||
+                (visibility >= Dijkstra::WallWeight && visibility - Dijkstra::WallWeight <= VisibilityThreshold) ) {
+                tile.isVisible = true;
+            } else {
+                tile.isVisible = false;
+            }
+        }
+    }
+    MapArea* currentArea = FindArea(map, center);
+    if(currentArea->height > 0 && currentArea->width > 0) {
+        for(int y = currentArea->topLeft.y; y < currentArea->topLeft.y + currentArea->height; ++y) {
+            for(int x = currentArea->topLeft.x; x < currentArea->topLeft.x + currentArea->width; ++x) {
+                Tile& tile(map.tileArray[y][x]);
+                tile.isVisible = true;
+            }
+        }
+    } else {
+        Hallway* hallway = static_cast<Hallway*>(currentArea);
+        for(const auto& step : hallway->path.steps) {
+            Tile& tile(map.tileArray[step.y][step.x]);
+            tile.isVisible = true;
+        }
+    }
+}

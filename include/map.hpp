@@ -30,18 +30,42 @@ struct Tile {
     Creature*                       creature;
 };
 
-struct Room {
-    UniqueID id;
+struct MapArea {
     MapLocation topLeft;
-    MapLocation center;
     int width;
     int height;
+
+    MapArea():
+        topLeft{0, 0}, width(0), height(0) {}
+    MapArea(const MapLocation& origin, int hSize, int vSize):
+        topLeft(origin), width(hSize), height(vSize) {}
+    MapArea(const MapArea& copy) = default;
+    ~MapArea() = default;
 };
 
-struct Hallway {
+struct Room: public MapArea {
+    UniqueID id;
+    MapLocation center;
+
+    Room(): MapArea(),
+        id(""), center{0, 0} {}
+    Room(const MapLocation& origin, int hSize, int vSize, UniqueID roomID, const MapLocation& centerLocation):
+        MapArea(origin, hSize, vSize), id(roomID), center(centerLocation) {}
+    Room(const Room& copy) = default;
+    ~Room() = default;
+};
+
+struct Hallway: public MapArea {
     Room* origin;
     Room* destination;
     Path path;
+
+    Hallway(): MapArea(),
+        origin(nullptr), destination(nullptr) {}
+    Hallway(Room* originRoom, Room* destRoom, const Path& pathTraveled):
+        MapArea(), origin(originRoom), destination(destRoom), path(pathTraveled) {}
+    Hallway(const Hallway& copy) = default;
+    ~Hallway() = default;
 };
 
 struct TilePlacementStrategy {
@@ -114,5 +138,11 @@ Hallway CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const Room& 
 Room FindCenterRoom(const Map& map);
 
 Room GetRoom(const Map& map, UniqueID roomID);
+
+MapArea* FindArea(const Map& map, const MapLocation& location);
+
+bool IsInRoom(const MapLocation& location, const Room& room);
+
+bool IsInHallway(const MapLocation& location, const Hallway& hallway);
 
 #endif //DGTKPROJECT_MAP_HPP

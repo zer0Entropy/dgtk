@@ -14,10 +14,11 @@ class Map;
 namespace Dijkstra {
 
   struct Node {
-      MapLocation location;
-      int       distance;
-      Node*     previous;
-      Node(): distance(-1), previous(nullptr) {}
+      MapLocation   location;
+      int           distance;
+      Node*         previous;
+      Node():
+        distance(-1), previous(nullptr) {}
       Node(const Node& copy) = default;
       ~Node() = default;
   };
@@ -49,6 +50,9 @@ namespace Dijkstra {
       Node                  nodeMap[MaxHeight][MaxWidth];
   };
 
+  constexpr int             FloorWeight{1};
+  constexpr int             WallWeight{99};
+
   class WeightedDistanceMap: public DistanceMap {
   public:
       void                  InitWeightsByWalkability(const Map& map);
@@ -57,9 +61,6 @@ namespace Dijkstra {
   private:
       void                  PopulateFrontier() override;
       int                   nodeWeights[MaxHeight][MaxWidth];
-      static constexpr int  floorWeight{1};
-      static constexpr int  wallWeight{99};
-
   };
 
 };

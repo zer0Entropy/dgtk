@@ -183,6 +183,21 @@ void GenerateMap(Map& map, RandomNumberGenerator& rng, const DisplayConfig& disp
     float scaleX = displayConfig.tileScaleX;
     float scaleY = displayConfig.tileScaleY;
 
+    for(int terrainIndex = 0; terrainIndex < (int)TerrainType::TotalNumTerrainTypes; ++terrainIndex) {
+        TerrainType terrainType = (TerrainType)terrainIndex;
+        if(terrainType == TerrainType::Empty) {
+            continue;
+        }
+        TerrainProperties& terrainProperties = map.properties.terrainProperties.at(terrainType);
+        if(terrainType == TerrainType::Floor) {
+            terrainProperties.isWalkable = true;
+            terrainProperties.isTransparent = true;
+        } else if(terrainType == TerrainType::Wall) {
+            terrainProperties.isWalkable = false;
+            terrainProperties.isTransparent = false;
+        }
+    }
+
     // Final pass: create a Tile at each MapLocation, create its Sprite & set properties
     for(int y = 0; y < properties.height; ++y) {
         for(int x = 0; x < properties.width; ++x) {
@@ -193,10 +208,6 @@ void GenerateMap(Map& map, RandomNumberGenerator& rng, const DisplayConfig& disp
             tile.sprite->setTexture(*tile.terrain->texture);
             tile.sprite->setScale(scaleX, scaleY);
             tile.isVisible = true;
-
-            /* DEBUG */
-            tile.terrain->isWalkable = true;
-            /* DEBUG */
         }
     }
 
@@ -234,11 +245,7 @@ void GenerateMap(Map& map, RandomNumberGenerator& rng, const DisplayConfig& disp
 }
 
 Hallway CreateHallway(Map& map, Dijkstra::DistanceMap& distanceMap, const Room& origin, const Room& destination) {
-    Hallway hallway = {
-      .origin = (Room*)&origin,
-      .destination = (Room*)&destination,
-      .path = distanceMap.FindPath(destination.center)
-    };
+    Hallway hallway((Room*)&origin, (Room*)&destination, distanceMap.FindPath(destination.center));
     return hallway;
 }
 
@@ -275,4 +282,47 @@ Room GetRoom(const Map& map, UniqueID roomID) {
         }
     }
     return findRoom;
+}
+
+MapArea* FindArea(const Map& map, const MapLocation& location) {
+    MapArea* area(nullptr);
+
+    for(auto& roomKVPair : map.properties.roomList) {
+        const Room& room(roomKVPair.second);
+        if(IsInRoom(location, room)) {
+            area = (MapArea*)&room;
+            break;
+        }
+    }
+
+    if(!area) {
+        for(const auto& hallway : map.properties.hallwayList) {
+            if(IsInHallway(location, hallway)) {
+                area = (MapArea*)&hallway;
+                break;
+            }
+        }
+    }
+
+    return area;
+}
+
+bool IsInRoom(const MapLocation& location, const Room& room) {
+    bool isInRoom(false);
+    if( location.x >= room.topLeft.x && location.x < room.topLeft.x + room.width &&
+        location.y >= room.topLeft.y && location.y < room.topLeft.y + room.height) {
+        isInRoom = true;
+    }
+    return isInRoom;
+}
+
+bool IsInHallway(const MapLocation& location, const Hallway& hallway) {
+    bool isInHallway(false);
+    for(auto& step : hallway.path.steps) {
+        if(step.x == location.x && step.y == location.y) {
+            isInHallway = true;
+            break;
+        }
+    }
+    return isInHallway;
 }

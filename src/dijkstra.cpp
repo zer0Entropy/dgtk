@@ -26,18 +26,18 @@ void Dijkstra::DistanceMap::Generate(const MapLocation& originLocation, int mapW
     for(int y = 0; y < height; ++y) {
         for(int x = 0; x < width; ++x) {
             nodeMap[y][x].location = MapLocation{x, y};
+            nodeMap[y][x].distance = -1;
+            nodeMap[y][x].previous = nullptr;
         }
     }
     currentNode = GetNode(origin.x, origin.y);
     currentNode->distance = 0;
-    Dijkstra::DistanceMap::PopulateFrontier();
-    int nodeCount(1);
+    PopulateFrontier();
     do {
         PopulateFrontier();
         if(!frontier.empty()) {
             currentNode = frontier.front();
             frontier.pop_front();
-            ++nodeCount;
         }
     } while(!frontier.empty());
 }
@@ -101,9 +101,9 @@ void Dijkstra::WeightedDistanceMap::InitWeightsByWalkability(const Map& map) {
         for(int x = 0; x < map.properties.width; ++x) {
             const Tile& tile(map.tileArray[y][x]);
             if(tile.terrain->isWalkable) {
-                nodeWeights[y][x] = floorWeight;
+                nodeWeights[y][x] = FloorWeight;
             } else {
-                nodeWeights[y][x] = wallWeight;
+                nodeWeights[y][x] = WallWeight;
             }
         } // x
     } // y
@@ -114,9 +114,9 @@ void Dijkstra::WeightedDistanceMap::InitWeightsByVisibility(const Map& map) {
         for(int x = 0; x < map.properties.width; ++x) {
             const Tile& tile(map.tileArray[y][x]);
             if(tile.terrain->isTransparent) {
-                nodeWeights[y][x] = floorWeight;
+                nodeWeights[y][x] = FloorWeight;
             } else {
-                nodeWeights[y][x] = wallWeight;
+                nodeWeights[y][x] = WallWeight;
             }
         } // x
     } // y

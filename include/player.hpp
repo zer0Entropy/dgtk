@@ -12,8 +12,11 @@
 #include <string>
 #include "location.hpp"
 
+class MapArea;
+
 struct Player {
     std::unique_ptr<Creature> character;
+    MapArea* currentArea;
 };
 
 class Game;

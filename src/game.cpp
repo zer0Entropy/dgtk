@@ -226,26 +226,37 @@ void Game::TransitionTo(Scene* scene) {
             if(possibleRoom.width > 4 && possibleRoom.height > 4) {
                 UniqueID roomID("Room#");
                 roomID.append(std::to_string(roomIndex++));
-                scene->map->properties.roomList.insert(std::make_pair( roomID, Room{
-                        .id = roomID,
-                        .topLeft = {possibleRoom.left, possibleRoom.top},
-                        .center = {possibleRoom.left + (possibleRoom.width / 2), possibleRoom.top + (possibleRoom.height / 2)},
-                        .width = possibleRoom.width,
-                        .height = possibleRoom.height }));
+                scene->map->properties.roomList.insert(std::make_pair(roomID,
+                                                                        Room(MapLocation{possibleRoom.left, possibleRoom.top},
+                                                                         possibleRoom.width,
+                                                                         possibleRoom.height,
+                                                                         roomID,
+                                                                         MapLocation{possibleRoom.left + (possibleRoom.width / 2), possibleRoom.top + (possibleRoom.height / 2)})) );
             }
         }
 
         GenerateMap(*scene->map.get(), rng, displayConfig);
+
+        Room* randomRoom(nullptr);
+        roomIndex = rng.GetRandom(0, map.properties.roomList.size());
+        int count(0);
+        for(auto roomIter = map.properties.roomList.begin(); roomIter != map.properties.roomList.end(); ++roomIter, ++count) {
+            randomRoom = &roomIter->second;
+            if(count == roomIndex) {
+                break;
+            }
+        }
 
         UniqueID playerName("Player1");
         sf::Texture* playerTexture(nullptr);
         std::string texturePath("/texture/oryx/oryx_16bit_fantasy_creatures_trans.png");
         Position texturePosition = { 24, 24 };
         int textureWidth(24), textureHeight(24);
-        MapLocation playerLocation = {12,7};
+        MapLocation playerLocation = {randomRoom->center.x,randomRoom->center.y};
         resourceSystem->LoadTexture(playerName, texturePath, texturePosition, textureWidth, textureHeight);
         playerTexture = resourceSystem->GetTexture(playerName);
         Player* player = CreatePlayer(playerName, playerTexture, playerLocation, map.properties);
+        player->currentArea = randomRoom;
         (map.tileArray[playerLocation.y][playerLocation.x]).creature = player->character.get();
         scene->creatures.push_back(player->character.get());
         scene->player.reset(std::move(player));
@@ -255,6 +266,8 @@ void Game::TransitionTo(Scene* scene) {
         scene->mapView->properties.widthInTiles = scene->mapView->properties.widthInPixels / (textureWidth * displayConfig.tileScaleX);
         scene->mapView->properties.heightInTiles = scene->mapView->properties.heightInPixels / (textureHeight * displayConfig.tileScaleY);
         CenterViewOnPlayer(*scene->mapView, *scene->map.get(), playerLocation);
+
+        InitVisibilityMap(map, scene->mapView->visibilityMap);
     }
 }
 
@@ -287,6 +300,8 @@ bool Game::MoveCreature(Creature* creature, MapLocation location) {
     } // check if location is valid
     if(success && creature->properties.name.compare(currentScene->player->character->properties.name) == 0) {
         CenterViewOnPlayer(*currentScene->mapView, *currentScene->map.get(), creature->properties.location);
+        UpdateVisibilityMap(map, currentScene->mapView->visibilityMap, creature->properties.location);
+        currentScene->player->currentArea = FindArea(map, creature->properties.location);
     }
     return success;
 }
